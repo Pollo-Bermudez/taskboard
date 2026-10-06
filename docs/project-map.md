@@ -1,31 +1,49 @@
-# Project Map
+# Project Map: TaskBoard
 
-Use this map to selectively load context for specific tasks instead of loading the entire codebase.
+Usa este mapa para cargar contexto de forma selectiva según el componente en el que estés trabajando.
 
-## 1. Shared Layer (`src/shared/`)
-Contains contracts, validation schemas, and shared utilities used by both frontend and backend.
-- **Key Files**:
-  - `src/shared/types/task.ts`: Core Task, Column, Board types.
-  - `src/shared/schemas/task.ts`: Zod validation schemas for requests.
-- **Pattern**: Zero external runtime dependencies except `zod`. Types are strictly exported.
+## 1. Frontend (`frontend/`)
+Aplicación SPA en React 18 empaquetada con Vite y servida en producción mediante NGINX 1.27.
+- **Tecnologías**: React 18, Vite, JavaScript puro (JSX), CSS estándar.
+- **Archivos Clave**:
+  - `frontend/package.json`: Scripts y dependencias del cliente.
+  - `frontend/vite.config.js`: Configuración del bundler Vite.
+  - `frontend/nginx.conf`: Configuración del servidor web y proxy reverso hacia el backend.
+  - `frontend/Dockerfile`: Multi-stage build (`node:20-alpine` -> `nginx:1.27-alpine`).
+  - `frontend/.dockerignore`: Exclusión de artefactos locales (`node_modules`, `dist`, etc.).
+  - `frontend/src/`: Código fuente de la interfaz (componentes, vistas, estilos).
 
-## 2. Server / Backend API (`src/server/`)
-Node.js REST API handling board state, persistence, and business logic.
-- **Key Files**:
-  - `src/server/routes/tasks.ts`: Route definitions.
-  - `src/server/controllers/tasks.ts`: HTTP request/response handlers.
-  - `src/server/services/taskService.ts`: Business logic and data operations.
-  - `src/server/middleware/errorHandler.ts`: Centralized error handling.
-- **Pattern**: Routes delegate to controllers -> services. Zod validates at the controller boundary.
+## 2. Backend (`backend/`)
+API REST construida con Node.js 20 y Express para la lógica de negocio y persistencia en base de datos.
+- **Tecnologías**: Node.js 20, Express, JavaScript puro, driver `pg`.
+- **Archivos Clave**:
+  - `backend/package.json`: Dependencias y scripts (`start`: `node src/server.js`).
+  - `backend/src/server.js`: Punto de entrada de la aplicación Express y configuración de rutas.
+  - `backend/src/db.js`: Configuración del pool de conexiones a PostgreSQL.
+  - `backend/Dockerfile`: Multi-stage build (`node:20-alpine`).
+  - `backend/.dockerignore`: Exclusión de `node_modules`, logs y `.env`.
 
-## 3. Client / Frontend UI (`src/client/`)
-React SPA built with Vite and Tailwind CSS.
-- **Key Files**:
-  - `src/client/components/Board/`: Kanban board, columns, drag-and-drop or status toggles.
-  - `src/client/components/TaskCard/`: Individual task presentation and action triggers.
-  - `src/client/api/taskClient.ts`: Typed fetch / React Query API client.
-- **Pattern**: Functional components with hooks, colocated tests, Tailwind utility styling.
+## 3. Base de Datos (`db/`)
+Capa de almacenamiento persistente basada en PostgreSQL 16.
+- **Archivos Clave**:
+  - `db/init.sql`: Script DDL para creación de tablas (tareas, columnas/estados) y datos iniciales de prueba. Se monta en `/docker-entrypoint-initdb.d/init.sql`.
 
-## 4. Documentation & Specifications (`docs/`)
-- `docs/architecture.md`: System design, data flow, and technology choices.
-- `docs/specs/`: Feature-specific PRDs and specifications.
+## 4. Orquestación Local (`docker-compose.yml`)
+Define los 3 servicios con sus políticas de red y volúmenes:
+- **Servicios**: `frontend`, `backend`, `db`.
+- **Redes**: `red-publica` (frontend y backend) y `red-interna` (`internal: true` para backend y db).
+- **Volúmenes**: `db_data` (Named volume montado en `/var/lib/postgresql/data`).
+- **Mapeo de Puertos**: `8080:80` (frontend), `3000:3000` (backend), db sin puertos hacia el host.
+- **Salud**: `pg_isready` en servicio `db`, `depends_on: condition: service_healthy` en backend.
+
+## 5. Manifiestos de Kubernetes (`k8s/`)
+Despliegue para clúster Kubernetes:
+- `k8s/namespace.yaml`
+- `k8s/configmap.yaml`
+- `k8s/secret.example.yaml`
+- `k8s/frontend-deployment.yaml` & `k8s/frontend-service.yaml`
+- `k8s/backend-deployment.yaml` & `k8s/backend-service.yaml`
+- `k8s/backend-hpa.yaml`
+- `k8s/db-statefulset.yaml` & `k8s/db-service.yaml`
+- `k8s/networkpolicy.yaml`
+- `k8s/ingress.yaml`

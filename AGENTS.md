@@ -1,90 +1,73 @@
-# Project: Taskboard
+# Project: TaskBoard (Proyecto Integrador Académico)
 
-A fullstack task and board management web application built with TypeScript, Node.js, and React.
+Aplicación web de gestión de tareas (TaskBoard) con arquitectura en tres capas (Frontend, Backend, Base de Datos), contenerizada con Docker y orquestada con Kubernetes.
 
 ## Tech Stack
-- **Frontend**: React, TypeScript, Tailwind CSS, Vite
-- **Backend**: Node.js, Express / Fastify, TypeScript
-- **Validation & Schemas**: Zod (shared types where applicable)
-- **State Management**: React Query (@tanstack/react-query) / React Context
-- **Testing**: Vitest / Jest, React Testing Library, Supertest
+- **Frontend**: React 18 + Vite + NGINX (JavaScript puro JSX, CSS nativo)
+- **Backend**: Node.js 20 + Express (JavaScript puro, punto de entrada `node src/server.js`)
+- **Base de Datos**: PostgreSQL 16 (StatefulSet con PVC en K8s, Named Volume en Docker Compose)
+- **Contenerización**: Docker & Docker Compose (Multi-stage builds, imágenes Alpine, redes bridge aisladas)
+- **Orquestación**: Kubernetes (Deployments, Services, StatefulSet, ConfigMap, Secrets, HPA, NetworkPolicy, Ingress)
 
-## Standard Commands
-- Dev (Fullstack): `npm run dev`
-- Build: `npm run build`
-- Test: `npm test`
-- Lint: `npm run lint`
-- Type Check: `npm run typecheck`
-
-## Code Conventions
-- **TypeScript**: Strict mode enabled. Avoid `any`; use `unknown` with type guards or Zod schemas.
-- **Exports**: Prefer named exports over default exports.
-- **Components**: Functional components with hooks only.
-- **File Organization**:
-  - `src/client/` - React frontend application.
-  - `src/server/` - Node.js API server and controllers.
-  - `src/shared/` - Shared types, schemas, and utility constants.
-- **Testing**: Colocate unit/component tests next to source (e.g., `TaskCard.tsx` -> `TaskCard.test.tsx`).
-- **Validation**: Validate all incoming HTTP payloads at API boundaries using Zod schemas.
-- **Error Handling**: Use structured domain errors and standard HTTP response envelopes.
-
-## Operational Boundaries & Safeguards
-- **Secrets**: Never commit `.env` files, API keys, or credentials.
-- **Verification**: Always run `npm run typecheck` and `npm test` before committing changes.
-- **Database / Schema**: Ask before applying destructive database operations or schema alterations.
-- **Context Economy**: When working on specific features, inspect only relevant slices of code (<2,000 lines). Do not dump the entire repository into context.
-
-## Architectural Patterns
-
-### 1. API Route & Controller Pattern (`src/server/`)
-```typescript
-import { Request, Response, NextFunction } from 'express';
-import { CreateTaskSchema } from '../shared/schemas';
-import * as taskService from '../services/taskService';
-
-export async function createTaskHandler(req: Request, res: Response, next: NextFunction) {
-  try {
-    const payload = CreateTaskSchema.parse(req.body);
-    const task = await taskService.createTask(payload);
-    return res.status(201).json({ success: true, data: task });
-  } catch (error) {
-    next(error);
-  }
-}
+## Estructura del Repositorio
+```
+taskboard/
+├── frontend/          # React 18 + Vite + Dockerfile multi-stage + .dockerignore
+├── backend/           # Node.js 20 + Express + Dockerfile multi-stage + .dockerignore
+├── db/
+│   └── init.sql       # Esquema DDL y datos iniciales de prueba
+├── docker-compose.yml # Orquestación local con redes y volúmenes
+└── k8s/               # Manifiestos de Kubernetes
+    ├── namespace.yaml
+    ├── configmap.yaml
+    ├── secret.example.yaml
+    ├── frontend-deployment.yaml
+    ├── frontend-service.yaml
+    ├── backend-deployment.yaml
+    ├── backend-service.yaml
+    ├── backend-hpa.yaml
+    ├── db-statefulset.yaml
+    ├── db-service.yaml
+    ├── networkpolicy.yaml
+    └── ingress.yaml
 ```
 
-### 2. Client Component Pattern (`src/client/`)
-```tsx
-import React from 'react';
-import type { Task } from '../shared/types';
+## Docker Standards (Obligatorios para la Entrega)
+- **Multi-stage builds**:
+  - **Frontend**: Etapa 1 (Build): `node:20-alpine` (compilación con Vite) -> Etapa 2 (Producción): `nginx:1.27-alpine` (sirve estáticos y proxy inverso a API).
+  - **Backend**: Etapa 1 (Deps): `node:20-alpine` -> Etapa 2 (Runtime): `node:20-alpine` mínima ejecutando como usuario no-root.
+- **Imágenes Base Oficiales**:
+  - `node:20-alpine`
+  - `nginx:1.27-alpine`
+  - `postgres:16-alpine`
+- **Archivos `.dockerignore`**: Presentes en `frontend/` y `backend/` excluyendo `node_modules`, `.git`, `.env`, dist, etc.
+- **Volumen Persistente (Named Volume)**: Volumen para PostgreSQL montado en `/var/lib/postgresql/data`.
+- **Aislamiento de Redes (Bridge)**:
+  - `red-publica`: Frontend accesible en puerto host `8080:80`.
+  - `red-interna`: Comunicación backend y base de datos con `internal: true`.
+- **Puertos**:
+  - Frontend: `8080:80` (expuesto al host).
+  - Backend: `3000:3000` (expuesto al host).
+  - Base de Datos (PostgreSQL): `5432` interno, **SIN exponer puerto al host**.
+- **Variables de Entorno**:
+  - Gestionadas mediante archivo `.env` (nunca credenciales hardcodeadas en `docker-compose.yml` ni en el código).
+  - Mantener un archivo `.env.example` versionado con valores plantilla.
+- **Control de Arranque y Healthchecks**:
+  - `depends_on` con condición `service_healthy`.
+  - PostgreSQL con healthcheck: `pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}`.
+  - Backend esperando que la base de datos esté lista y saludable antes de iniciar.
 
-interface TaskCardProps {
-  task: Task;
-  onStatusChange: (taskId: string, status: Task['status']) => void;
-}
+## Convenciones de Código
+- **Lenguaje**: JavaScript puro (ES Modules / CommonJS según `package.json`).
+- **Frontend**: Componentes funcionales en React con hooks, estilos CSS nativos (`.css`).
+- **Backend**:
+  - Punto de entrada: `node src/server.js`.
+  - Rutas y controladores organizados modularmente con Express.
+  - Middleware de manejo de errores centralizado `(err, req, res, next)`.
+  - Cliente de base de datos con `pg` (Pool de conexiones).
+- **Base de Datos**: Inicialización mediante script SQL idempotente en `db/init.sql` montado en `/docker-entrypoint-initdb.d/`.
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange }) => {
-  return (
-    <div className="p-4 rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow-md transition">
-      <h3 className="font-semibold text-slate-800">{task.title}</h3>
-      {task.description && <p className="text-sm text-slate-600 mt-1">{task.description}</p>}
-      <div className="mt-3 flex justify-between items-center text-xs">
-        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700">{task.status}</span>
-        <button
-          onClick={() => onStatusChange(task.id, task.status === 'done' ? 'todo' : 'done')}
-          className="text-blue-600 hover:underline"
-        >
-          Toggle Status
-        </button>
-      </div>
-    </div>
-  );
-};
-```
-
-## Context Engineering Guidelines
-- **Context Budget**: Start trimming working memory at ~75% capacity. Discard dead ends and verbose terminal output; protect active task constraints and errors.
-- **Level 1 (Rules)**: This file (`AGENTS.md`) provides permanent baseline rules.
-- **Level 2 (Specs)**: Reference `docs/specs/` for feature-specific specifications before implementation.
-- **Level 3 (Files)**: Read target files and their tests before modifying.
-- **Handling Ambiguity**: If specs and existing code conflict, surface the discrepancy explicitly with options rather than guessing.
+## Context Engineering y Salvaguardas
+- **Economía de Contexto**: Al trabajar en un componente específico (frontend, backend, db o k8s), inspeccionar únicamente los archivos pertinentes (<2,000 líneas).
+- **Secretos**: NUNCA commitear archivos `.env` con contraseñas reales.
+- **Verificación**: Validar sintaxis con `docker compose config`, `nginx -t` y pruebas de conectividad de servicios.

@@ -1,26 +1,28 @@
-# Feature Spec: [Feature Name]
+# Especificación de Tarea / Módulo: [Nombre del Módulo]
 
-> **Context Note for Agents**: Load only this spec file and the files listed in "Affected Files" when working on this feature.
+> **Nota de Contexto para el Asistente**: Cargar únicamente este archivo de especificación y los archivos listados en "Archivos Afectados" al trabajar en esta tarea.
 
-## 1. Goal & User Story
-- **As a**: [user persona]
-- **I want to**: [perform action]
-- **So that**: [achieve outcome]
+## 1. Objetivo y Alcance
+- **Módulo**: [Frontend / Backend / DB / Docker / K8s]
+- **Descripción**: [Propósito del cambio o requerimiento]
 
-## 2. Scope & Requirements
-- [ ] Requirement 1
-- [ ] Requirement 2
-- [ ] Requirement 3
+## 2. Requerimientos Funcionales / Técnicos
+- [ ] Requerimiento 1
+- [ ] Requerimiento 2
+- [ ] Requerimiento 3
 
-## 3. Non-Goals / Out of Scope
-- What this feature explicitly will NOT do in this iteration.
+## 3. Restricciones Específicas
+- Stack: JavaScript puro (React 18 + Vite, Node.js 20 + Express).
+- Contenedores: Cumplir estándares Docker multi-stage y redes bridge.
 
-## 4. Affected Files & Modules
-- `src/shared/...` (Schemas & types)
-- `src/server/...` (API routes/services)
-- `src/client/...` (UI components/hooks)
+## 4. Archivos Afectados
+- `frontend/...`
+- `backend/...`
+- `db/...`
+- `docker-compose.yml`
+- `k8s/...`
 
-## 5. Verification Plan
-- **Typecheck**: `npm run typecheck`
-- **Unit / Integration Tests**: [specific test command or file]
-- **Manual Verification**: Steps to test in UI/API
+## 5. Plan de Verificación
+- **Prueba de Build**: `docker build ...` o `npm run build`
+- **Prueba de Configuración**: `docker compose config`
+- **Verificación de Servicio**: Comprobar endpoints HTTP o estado de salud de contenedor
