@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true
-  }
+    host: true,
+    // Desarrollo fuera de Docker: reenvía /api al backend publicado en el host.
+    proxy: {
+      '/api': process.env.VITE_API_PROXY || 'http://localhost:3001',
+    },
+  },
 });

@@ -64,7 +64,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Deps:** T1
 **Files:** `backend/src/routes/{equipos,tareas}.js`, `backend/src/app.js`, `backend/test/lectura.test.js`
 
-### - [ ] T5: Router + vista global (M)
+### - [x] T5: Router + vista global (M)
 `react-router-dom`; rutas `/global`, `/equipo/:id`, `/login` (placeholder). `GlobalPage`: agrupar por equipo, filtros por equipo y estado, polling 15 s (limpiar intervalo al desmontar), solo lectura. Cliente `src/api/client.js` con `credentials: 'include'`. Conservar widget de salud.
 
 **Acceptance:**
