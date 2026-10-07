@@ -6,9 +6,17 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# ---------- Etapa 2: ejecución ----------
+# ---------- Etapa 2: ejecución (NGINX sin privilegios) ----------
 FROM nginx:1.27-alpine
+ENV BACKEND_HOST=backend \
+    BACKEND_PORT=3000 \
+    NGINX_ENVSUBST_FILTER=^BACKEND_
+# El usuario nginx necesita escribir caché, PID y la config generada desde la plantilla.
+RUN sed -i 's,^pid .*,pid /tmp/nginx.pid;,; /^user /d' /etc/nginx/nginx.conf \
+ && rm /etc/nginx/conf.d/default.conf \
+ && chown -R nginx:nginx /var/cache/nginx /etc/nginx/conf.d
+COPY templates /etc/nginx/templates
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+USER nginx
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

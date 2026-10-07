@@ -31,7 +31,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Deps:** T1
 **Files:** `backend/src/migrate.js`, `backend/src/server.js`, `backend/migrations/001_auth.sql` (DV-14), `backend/Dockerfile`, `.env.example`
 
-### - [ ] T3: NGINX no-root + template + headers (M)
+### - [x] T3: NGINX no-root + template + headers (M)
 `USER nginx`, permisos sobre `/var/cache/nginx`, `/var/run`/pid, `/etc/nginx/conf.d`; escucha 8080. `nginx.conf` → `templates/default.conf.template` con `${BACKEND_HOST}`. Headers `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`. Compose `8080:8080` + `BACKEND_HOST=backend`. Actualizar `AGENTS.md` (puertos 3001 y 8080 interno). (DV-02, DV-07, DV-11)
 
 **Acceptance:**
@@ -44,9 +44,9 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Files:** `frontend/Dockerfile`, `frontend/templates/default.conf.template` (reemplaza `nginx.conf`), `docker-compose.yml`, `AGENTS.md`
 
 ## Checkpoint 1: Foundation
-- [ ] `docker compose down -v && docker compose up -d --build` limpio
-- [ ] `docker images` → frontend y backend < 150 MB
-- [ ] `npm test` pasa
+- [x] `docker compose down -v && docker compose up -d --build` limpio
+- [x] `scripts/image-sizes.sh` → backend 148.9 MB, frontend 54.3 MB (margen backend ~1 MB: vigilar)
+- [x] `npm test` pasa
 - [ ] Revisión humana
 
 ---

@@ -2,7 +2,10 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+# Se eliminan docs, mapas y tipos: no se usan en runtime y reducen la imagen final.
+RUN npm ci --omit=dev \
+ && find node_modules -type f \( -name '*.md' -o -name '*.map' -o -name '*.ts' -o -name '*.markdown' \) -delete \
+ && rm -rf node_modules/.package-lock.json
 
 # ---------- Etapa opcional: pruebas (docker compose --profile test) ----------
 FROM node:20-alpine AS test

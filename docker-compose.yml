@@ -1,8 +1,11 @@
 services:
   frontend:
     build: ./frontend
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: 3000
     ports:
-      - "8080:80"
+      - "8080:8080"
     depends_on:
       - backend
     networks:

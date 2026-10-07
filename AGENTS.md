@@ -34,7 +34,7 @@ taskboard/
 
 ## Docker Standards (Obligatorios para la Entrega)
 - **Multi-stage builds**:
-  - **Frontend**: Etapa 1 (Build): `node:20-alpine` (compilación con Vite) -> Etapa 2 (Producción): `nginx:1.27-alpine` (sirve estáticos y proxy inverso a API).
+  - **Frontend**: Etapa 1 (Build): `node:20-alpine` (compilación con Vite) -> Etapa 2 (Producción): `nginx:1.27-alpine` como usuario `nginx` (sirve estáticos y proxy inverso a API vía plantilla `templates/default.conf.template` con `BACKEND_HOST`).
   - **Backend**: Etapa 1 (Deps): `node:20-alpine` -> Etapa 2 (Runtime): `node:20-alpine` mínima ejecutando como usuario no-root.
 - **Imágenes Base Oficiales**:
   - `node:20-alpine`
@@ -43,11 +43,11 @@ taskboard/
 - **Archivos `.dockerignore`**: Presentes en `frontend/` y `backend/` excluyendo `node_modules`, `.git`, `.env`, dist, etc.
 - **Volumen Persistente (Named Volume)**: Volumen para PostgreSQL montado en `/var/lib/postgresql/data`.
 - **Aislamiento de Redes (Bridge)**:
-  - `red-publica`: Frontend accesible en puerto host `8080:80`.
+  - `red-publica`: Frontend accesible en puerto host `8080:8080`.
   - `red-interna`: Comunicación backend y base de datos con `internal: true`.
 - **Puertos**:
-  - Frontend: `8080:80` (expuesto al host).
-  - Backend: `3000:3000` (expuesto al host).
+  - Frontend: `8080:8080` (NGINX sin root escucha en 8080 dentro del contenedor; en K8s `frontend-svc:80 → 8080`).
+  - Backend: `3001:3000` (el contenedor escucha en 3000; 3001 en el host porque 3000 está ocupado localmente).
   - Base de Datos (PostgreSQL): `5432` interno, **SIN exponer puerto al host**.
 - **Variables de Entorno**:
   - Gestionadas mediante archivo `.env` (nunca credenciales hardcodeadas en `docker-compose.yml` ni en el código).
@@ -66,6 +66,13 @@ taskboard/
   - Middleware de manejo de errores centralizado `(err, req, res, next)`.
   - Cliente de base de datos con `pg` (Pool de conexiones).
 - **Base de Datos**: Inicialización mediante script SQL idempotente en `db/init.sql` montado en `/docker-entrypoint-initdb.d/`.
+
+## Flujo de trabajo (Spec-Driven Development)
+- Spec aprobado: `docs/specs/SPEC.md` (incluye registro de desviaciones respecto al PDF).
+- Plan y tareas: `tasks/plan.md`, `tasks/todo.md`.
+- Pruebas backend: `cd backend && npm test` (sin BD) y `docker compose --profile test run --rm backend-test` (con BD).
+- Migraciones: `backend/migrations/NNN_*.sql`, aplicadas por el backend al arrancar. No editar `db/init.sql` para cambios nuevos.
+- Tamaño de imágenes: `scripts/image-sizes.sh <imagen>...` (límite 150 MB).
 
 ## Context Engineering y Salvaguardas
 - **Economía de Contexto**: Al trabajar en un componente específico (frontend, backend, db o k8s), inspeccionar únicamente los archivos pertinentes (<2,000 líneas).

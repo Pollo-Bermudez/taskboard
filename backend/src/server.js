@@ -1,4 +1,5 @@
-require('dotenv').config();
+// dotenv es dependencia de desarrollo: en contenedores las variables llegan del entorno.
+try { require('dotenv').config(); } catch { /* no instalado en producción */ }
 
 const { loadConfig } = require('./config');
 const { createPool } = require('./db');
