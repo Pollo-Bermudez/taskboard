@@ -35,3 +35,6 @@ Thumbs.db
 # Testing & Coverage
 coverage/
 .nyc_output/
+
+# Respaldos locales de PostgreSQL
+backups/

@@ -158,7 +158,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 
 ## Phase 5: Respaldos
 
-### - [ ] T11: Respaldo/restauración en Compose (S)
+### - [x] T11: Respaldo/restauración en Compose (S)
 `scripts/backup.sh` (`docker compose exec -T db pg_dump -Fc` → `backups/taskboard-YYYYmmdd-HHMM.dump`) y `scripts/restore.sh <archivo>`. `backups/` en `.gitignore`.
 
 **Acceptance:**
