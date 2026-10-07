@@ -53,7 +53,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 
 ## Phase 2: Lectura
 
-### - [ ] T4: API de lectura (S)
+### - [x] T4: API de lectura (S)
 `GET /api/equipos`; `GET /api/tareas/global` (join con `equipos.nombre`, `color_hex`, `usuarios.nombre` del asignado). Queries parametrizadas. Pruebas.
 
 **Acceptance:**
