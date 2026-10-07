@@ -259,3 +259,13 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 - [ ] `/review` + `security-auditor` sin hallazgos críticos
 - [ ] Spec actualizado con desviaciones surgidas durante la implementación
 - [ ] Listo para entrega
+
+---
+
+## Rediseño UI (Nocturne)
+
+### - [x] D1: Diseños en canvas con design system Nocturne
+10 pantallas (sistema, panel editable, global en matriz, login, solo lectura, estados, modal de tarea, eliminar, móvil ×2).
+
+### - [x] D2: Aplicar Nocturne al frontend
+`nocturne.css` (copia exacta) + `app.css`; barra lateral con equipos y estado del sistema; carriles con pestañas en móvil; matriz global; diálogos propios (tarea, eliminar) con foco y Escape; avisos breves; esqueletos de carga, error con reintento, tablero vacío y 404. Verificado en navegador (escritorio 1440 y móvil 375).

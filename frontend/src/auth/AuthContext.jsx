@@ -38,7 +38,7 @@ export function useAuth() {
 export function RequireAuth({ children }) {
   const { usuario, cargando } = useAuth();
   const location = useLocation();
-  if (cargando) return <p className="muted page-loading">Cargando sesión…</p>;
+  if (cargando) return <p className="muted" style={{ padding: 32 }}>Cargando sesión…</p>;
   if (!usuario) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return children;
 }

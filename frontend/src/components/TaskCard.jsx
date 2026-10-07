@@ -1,36 +1,45 @@
-import { ESTADO_TITULO } from '../constants.js';
+import { forwardRef } from 'react';
 
-function iniciales(nombre) {
+export function iniciales(nombre) {
   return nombre
     .split(' ')
+    .filter((p) => p.length > 2)
     .slice(0, 2)
     .map((p) => p[0])
     .join('')
     .toUpperCase();
 }
 
-export default function TaskCard({ tarea, mostrarEstado = false, children }) {
+const fecha = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' });
+
+// Tarjeta de tarea de Nocturne (.card): antetítulo de prioridad, título, descripción y responsable.
+const TaskCard = forwardRef(function TaskCard({ tarea, acciones, className = '', ...rest }, ref) {
   return (
-    <div className="task-card">
-      <div className="card-top">
-        {mostrarEstado ? <span className={`card-tag estado-${tarea.estado}`}>{ESTADO_TITULO[tarea.estado]}</span> : <span />}
-        <span className={`priority-badge priority-${tarea.prioridad}`}>{tarea.prioridad}</span>
+    <article ref={ref} className={`card elev-sm task ${className}`} {...rest}>
+      <div className="task-top">
+        <span className={`card-kicker prio-${tarea.prioridad}`}>Prioridad {tarea.prioridad}</span>
+        <time className="card-meta" dateTime={tarea.actualizado_en}>{fecha.format(new Date(tarea.actualizado_en))}</time>
       </div>
-      <h4 className="card-title">{tarea.titulo}</h4>
-      {tarea.descripcion && <p className="card-desc">{tarea.descripcion}</p>}
-      <div className="card-footer">
-        <div className="assignee">
+      <h3 className="card-title">{tarea.titulo}</h3>
+      {tarea.descripcion && <p className="card-body">{tarea.descripcion}</p>}
+      <div className="task-bottom">
+        <div className="card-meta">
           {tarea.asignado_nombre ? (
             <>
-              <span className="assignee-avatar">{iniciales(tarea.asignado_nombre)}</span>
-              <span className="assignee-name">{tarea.asignado_nombre}</span>
+              <span className="avatar" aria-hidden="true">{iniciales(tarea.asignado_nombre)}</span>
+              <span>{tarea.asignado_nombre}</span>
             </>
           ) : (
-            <span className="assignee-name muted">Sin asignar</span>
+            <>
+              <span className="avatar avatar-vacio" aria-hidden="true">?</span>
+              <span>Sin responsable</span>
+            </>
           )}
         </div>
-        {children}
+        {acciones}
       </div>
-    </div>
+    </article>
   );
-}
+});
+
+export default TaskCard;

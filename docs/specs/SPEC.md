@@ -282,6 +282,8 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-14 | Migraciones en `db/migrations/` | `backend/migrations/`; pruebas con BD en servicio `backend-test` (perfil `test`) | El contexto de build del backend es `./backend`; el backend las aplica al arrancar |
 | DV-15 | Runtime backend `FROM node:20-alpine` directo | Etapa `runtime-base` desde `node:20-alpine` sin npm/npx/corepack/yarn, aplanada con `FROM scratch` + `COPY --from` | Con `node:20-alpine` directo la imagen medía 149.6 MB (límite 150); aplanada mide ~125 MB y sin gestores de paquetes en producción |
 | DV-16 | Sin límite de intentos de login | Pendiente (ver Open Questions) | Rate limiting es tier "Ask first" en `security-and-hardening` |
+| DV-17 | UI sin design system definido (React + CSS nativo) | Design system **Nocturne** (copiado en `frontend/src/styles/nocturne.css`) + capa `app.css` | Interfaz consistente para un gestor de equipo; Inter servida localmente con `@fontsource/inter` para respetar la CSP (`font-src 'self'`) |
+| DV-18 | Vista global agrupada por equipo | Matriz equipos × estados en escritorio; lista agrupada en móvil | Lectura de todo el equipo de un vistazo |
 | DV-13 (P6) | Respaldos/migraciones solo mencionados en Tabla 1 | `db/migrations/` + `schema_migrations`; `pg_dump` script + CronJob | Necesario para evolucionar el esquema |
 
 ## Open Questions

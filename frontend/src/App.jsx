@@ -1,7 +1,6 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom';
 import { AuthProvider, RequireAuth, useAuth } from './auth/AuthContext.jsx';
-import Navbar from './components/Navbar.jsx';
-import StatusWidget from './components/StatusWidget.jsx';
+import Sidebar from './components/Sidebar.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import GlobalPage from './pages/GlobalPage.jsx';
 import EquipoPage from './pages/EquipoPage.jsx';
@@ -19,20 +18,31 @@ function EquipoRoute() {
   return <EquipoPage key={id} />;
 }
 
+function Shell() {
+  return (
+    <RequireAuth>
+      <div className="shell">
+        <Sidebar />
+        <main className="shell-main">
+          <Outlet />
+        </main>
+      </div>
+    </RequireAuth>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <div className="app-layout">
-        <Navbar />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<RequireAuth><Inicio /></RequireAuth>} />
-          <Route path="/global" element={<RequireAuth><GlobalPage /></RequireAuth>} />
-          <Route path="/equipo/:id" element={<RequireAuth><EquipoRoute /></RequireAuth>} />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<Shell />}>
+          <Route path="/" element={<Inicio />} />
+          <Route path="/global" element={<GlobalPage />} />
+          <Route path="/equipo/:id" element={<EquipoRoute />} />
           <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-        <StatusWidget />
-      </div>
+        </Route>
+      </Routes>
     </AuthProvider>
   );
 }
