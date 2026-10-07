@@ -124,7 +124,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Deps:** T7
 **Files:** `backend/src/routes/{tareas,equipos}.js`, `backend/test/tareas.test.js`, `frontend/src/pages/EquipoPage.jsx`, `frontend/src/App.jsx`
 
-### - [ ] T9: Escritura con autorización (M)
+### - [x] T9: Escritura con autorización (M)
 `POST /api/tareas` (equipo del token = destino, si no 403), `PATCH /api/tareas/:id` (estado, asignado_a, descripcion, titulo, prioridad; propietario o 403; `asignado_a` debe ser del mismo equipo o 422), `DELETE /api/tareas/:id` (propietario o 403). Validación de input (estado ∈ enum, longitudes).
 
 **Acceptance:**
