@@ -275,7 +275,7 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-06 (D6) | NetworkPolicy sin requisitos | `minikube start --cni=calico` | CNI por defecto no aplica NetworkPolicy |
 | DV-07 (D7/P3) | Frontend `nginx:1.27-alpine` como root, puerto 80 | `USER nginx`, puerto 8080 en contenedor | Cumplir §5.3 (no-root) |
 | DV-08 (D8) | `API_BASE_URL` en ConfigMap del frontend | `/api` relativo en el bundle; variable documentada como informativa | Vite fija variables en build |
-| DV-09 (D9) | Sin estrategia de imágenes | `eval $(minikube docker-env)` + `imagePullPolicy: IfNotPresent` | Evitar `ErrImagePull` |
+| DV-09 (D9) | Sin estrategia de imágenes | `docker build` local + `minikube image load` + `imagePullPolicy: IfNotPresent` | Evitar `ErrImagePull` |
 | DV-10 (D10) | `taskboard.local` sin pasos | `/etc/hosts` + `minikube tunnel` | Driver docker en macOS |
 | DV-11 (P4) | Backend `3000:3000` | `3001:3000` | Puerto 3000 ocupado en el host |
 | DV-12 (P1) | JWT sin login definido; `usuarios` sin contraseña | Login + access 15 min + refresh 3 días rotativo en cookies httpOnly; `password_hash`, tabla `refresh_tokens` | Tabla 2 no cubría autenticación |

@@ -31,7 +31,7 @@ minikube addons enable metrics-server
 scripts/k8s-build.sh
 ```
 
-Construye `taskboard/backend:1.0.0` y `taskboard/frontend:1.0.0` con el Docker de Minikube (`eval $(minikube docker-env)`), así el cluster las usa sin registro (`imagePullPolicy: IfNotPresent`, DV-09). Al final imprime el tamaño de cada imagen (límite 150 MB).
+Construye `taskboard/backend:1.0.0` y `taskboard/frontend:1.0.0` con tu Docker local y las carga en el cluster con `minikube image load` (sirve con runtime containerd o docker), así el cluster las usa sin registro (`imagePullPolicy: IfNotPresent`, DV-09). Al final imprime el tamaño de cada imagen (límite 150 MB).
 
 ## 4. Credenciales
 
