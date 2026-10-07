@@ -280,8 +280,13 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-11 (P4) | Backend `3000:3000` | `3001:3000` | Puerto 3000 ocupado en el host |
 | DV-12 (P1) | JWT sin login definido; `usuarios` sin contraseña | Login + access 15 min + refresh 3 días rotativo en cookies httpOnly; `password_hash`, tabla `refresh_tokens` | Tabla 2 no cubría autenticación |
 | DV-14 | Migraciones en `db/migrations/` | `backend/migrations/`; pruebas con BD en servicio `backend-test` (perfil `test`) | El contexto de build del backend es `./backend`; el backend las aplica al arrancar |
+| DV-15 | Runtime backend `FROM node:20-alpine` directo | Etapa `runtime-base` desde `node:20-alpine` sin npm/npx/corepack/yarn, aplanada con `FROM scratch` + `COPY --from` | Con `node:20-alpine` directo la imagen medía 149.6 MB (límite 150); aplanada mide ~125 MB y sin gestores de paquetes en producción |
+| DV-16 | Sin límite de intentos de login | Pendiente (ver Open Questions) | Rate limiting es tier "Ask first" en `security-and-hardening` |
 | DV-13 (P6) | Respaldos/migraciones solo mencionados en Tabla 1 | `db/migrations/` + `schema_migrations`; `pg_dump` script + CronJob | Necesario para evolucionar el esquema |
 
 ## Open Questions
 
 Ninguna bloqueante. Nuevas dudas se agregan aquí durante la implementación.
+
+- **🔍 POR REVISAR – Rate limiting de login (DV-16):** no hay límite de intentos en `POST /api/auth/login`. Un limitador en memoria es por réplica (con HPA 2–6 el límite real se multiplica). Opciones: (a) limitador en memoria por IP (simple, suficiente para el proyecto); (b) contador en PostgreSQL por correo (consistente entre réplicas); (c) dejarlo fuera de alcance y documentarlo.
+- **Nota – Refresh concurrente entre pestañas:** si dos pestañas refrescan con el mismo token a la vez, la segunda se interpreta como reuso y cierra la sesión. El frontend evita carreras dentro de una pestaña; entre pestañas es un caso raro y se acepta.

@@ -42,3 +42,23 @@ async function createTestDatabase() {
 }
 
 module.exports = { HAS_DB, TEST_PASSWORD, createTestDatabase };
+
+const request = require('supertest');
+
+// Usuarios seed: equipo 1 DevOps, equipo 2 Backend, equipo 3 Frontend.
+const USUARIOS = {
+  devops: 'hugo.devops@taskboard.local',
+  backend: 'francisco.backend@taskboard.local',
+  backend2: 'carlos.dev@taskboard.local',
+  frontend: 'ana.frontend@taskboard.local',
+};
+
+async function loginAgent(app, correo) {
+  const agent = request.agent(app);
+  const res = await agent.post('/api/auth/login').send({ correo, password: TEST_PASSWORD });
+  if (res.status !== 200) throw new Error(`login de prueba falló: ${res.status}`);
+  return agent;
+}
+
+module.exports.USUARIOS = USUARIOS;
+module.exports.loginAgent = loginAgent;

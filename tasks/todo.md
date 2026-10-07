@@ -80,7 +80,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 
 ## Phase 3: Autenticación
 
-### - [ ] T6: Auth API (M)
+### - [x] T6: Auth API (M)
 `POST /api/auth/login` (bcrypt compare, mensaje genérico ante error), `POST /api/auth/refresh` (rota token; reuso de token revocado → revoca familia), `POST /api/auth/logout`, `GET /api/auth/me`. Cookies httpOnly `SameSite=Strict`, `Secure` = `COOKIE_SECURE`; access 15 min (`Path=/api`), refresh 3 días (`Path=/api/auth`). Middleware `requireAuth` → `req.user = { id, equipo_id, rol }`. Proteger todo `/api` salvo health, ready y auth.
 
 **Acceptance:**
