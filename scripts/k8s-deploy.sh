@@ -21,7 +21,7 @@ kubectl -n "$NS" create configmap db-init --from-file=init.sql=db/init.sql \
 
 kubectl apply -f k8s/storageclass.yaml -f k8s/configmap.yaml
 kubectl apply -f k8s/db-service.yaml -f k8s/db-statefulset.yaml -f k8s/networkpolicy.yaml
-kubectl -n "$NS" rollout status statefulset/postgres --timeout=180s
+kubectl -n "$NS" wait --for=condition=Ready pod/postgres-0 --timeout=240s  # OnDelete no admite rollout status
 
 kubectl apply -f k8s/backend-service.yaml -f k8s/backend-deployment.yaml -f k8s/backend-hpa.yaml
 kubectl apply -f k8s/frontend-service.yaml -f k8s/frontend-deployment.yaml
