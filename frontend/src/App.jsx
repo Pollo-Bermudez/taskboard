@@ -62,6 +62,7 @@ export default function App() {
   const [tasks] = useState(INITIAL_TASKS);
   const [healthStatus, setHealthStatus] = useState('Verificando...');
   const [readyStatus, setReadyStatus] = useState('Verificando...');
+  const [cacheStatus, setCacheStatus] = useState('Verificando...');
   const [loading, setLoading] = useState(false);
   const [showStatusDetails, setShowStatusDetails] = useState(false);
 
@@ -90,6 +91,18 @@ export default function App() {
     } catch (err) {
       setReadyStatus('Inalcanzable');
     }
+
+    try {
+      const resCache = await fetch('/api/cache');
+      if (resCache.ok) {
+        const dataCache = await resCache.json();
+        setCacheStatus(dataCache.status || 'cache-ready');
+      } else {
+        setCacheStatus(`Error (${resCache.status})`);
+      }
+    } catch (err) {
+      setCacheStatus('Inalcanzable');
+    }
     setLoading(false);
   };
 
@@ -103,7 +116,10 @@ export default function App() {
     { key: 'completada', titulo: 'Completada', colorBadge: 'col-badge-completada' }
   ];
 
-  const isSystemHealthy = healthStatus === 'ok' && readyStatus === 'ready';
+  const isSystemHealthy =
+    healthStatus === 'ok' &&
+    readyStatus === 'ready' &&
+    cacheStatus === 'cache-ready';
 
   return (
     <div className="app-layout">
@@ -226,6 +242,16 @@ export default function App() {
                 }`}
               >
                 {readyStatus}
+              </span>
+            </div>
+            <div className="status-row">
+              <span>Redis Cache (/api/cache):</span>
+              <span
+                className={`status-tag ${
+                  cacheStatus === 'cache-ready' ? 'status-ok' : 'status-warn'
+                }`}
+              >
+                {cacheStatus}
               </span>
             </div>
             <button

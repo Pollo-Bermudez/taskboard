@@ -19,10 +19,14 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: ${REDIS_HOST:-cache}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     ports:
       - "3001:3000"
     depends_on:
       db:
+        condition: service_healthy
+      cache:
         condition: service_healthy
     networks:
       - red-publica
@@ -45,8 +49,21 @@ services:
     networks:
       - red-interna
 
+  cache:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - red-interna
+
 volumes:
   pgdata:
+  redis_data:
 
 networks:
   red-publica:

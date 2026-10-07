@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const { createClient } = require('redis');
 require('dotenv').config();
 
 const app = express();
@@ -20,12 +21,33 @@ const pool = new Pool({
   connectionTimeoutMillis: 3000,
 });
 
+// Configuración del Cliente de Redis
+const redisHost = process.env.REDIS_HOST || 'cache';
+const redisPort = process.env.REDIS_PORT || 6379;
+const redisClient = createClient({
+  url: `redis://${redisHost}:${redisPort}`
+});
+
+redisClient.on('error', (err) => {
+  console.error('[Redis Client Error]', err.message);
+});
+
+// Conexión inicial a Redis
+(async () => {
+  try {
+    await redisClient.connect();
+    console.log(`[TaskBoard Backend] Conectado a Redis en ${redisHost}:${redisPort}`);
+  } catch (err) {
+    console.error('[TaskBoard Backend] Error conectando a Redis al iniciar:', err.message);
+  }
+})();
+
 // Endpoint de vitalidad (Liveness Probe)
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Endpoint de disponibilidad (Readiness Probe)
+// Endpoint de disponibilidad (Readiness Probe para PostgreSQL)
 app.get('/api/ready', async (req, res) => {
   try {
     const client = await pool.connect();
@@ -42,12 +64,37 @@ app.get('/api/ready', async (req, res) => {
   }
 });
 
+// Endpoint de verificación de Caché (Redis PING)
+app.get('/api/cache', async (req, res) => {
+  try {
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
+    const pong = await redisClient.ping();
+    if (pong === 'PONG') {
+      return res.status(200).json({ status: 'cache-ready' });
+    }
+    return res.status(500).json({
+      status: 'error',
+      message: 'Respuesta inesperada de Redis',
+      pong
+    });
+  } catch (error) {
+    console.error('Error al verificar conexión con Redis:', error.message);
+    return res.status(500).json({
+      status: 'error',
+      message: 'No se pudo conectar a Redis Cache',
+      error: error.message
+    });
+  }
+});
+
 // Endpoint base informativo
 app.get('/api', (req, res) => {
   res.status(200).json({
     name: 'TaskBoard API',
     version: '1.0.0',
-    endpoints: ['/api/health', '/api/ready', '/api/equipos', '/api/tareas']
+    endpoints: ['/api/health', '/api/ready', '/api/cache', '/api/equipos', '/api/tareas']
   });
 });
 
