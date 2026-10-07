@@ -1,33 +1,31 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import GlobalPage from './pages/GlobalPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, RequireAuth, useAuth } from './auth/AuthContext.jsx';
+import Navbar from './components/Navbar.jsx';
 import StatusWidget from './components/StatusWidget.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import GlobalPage from './pages/GlobalPage.jsx';
+import EquipoPage from './pages/EquipoPage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
+
+function Inicio() {
+  const { usuario } = useAuth();
+  return <Navigate to={`/equipo/${usuario.equipo_id}`} replace />;
+}
 
 export default function App() {
   return (
-    <div className="app-layout">
-      <header className="navbar">
-        <div className="navbar-brand">
-          <div className="brand-icon">📋</div>
-          <div>
-            <h1 className="brand-title">TaskBoard</h1>
-            <span className="brand-subtitle">Control de Tareas por Equipo</span>
-          </div>
-        </div>
-        <nav className="navbar-links">
-          <NavLink to="/global" className="nav-link">
-            Vista global
-          </NavLink>
-        </nav>
-      </header>
-
-      <Routes>
-        <Route path="/" element={<Navigate to="/global" replace />} />
-        <Route path="/global" element={<GlobalPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-
-      <StatusWidget />
-    </div>
+    <AuthProvider>
+      <div className="app-layout">
+        <Navbar />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<RequireAuth><Inicio /></RequireAuth>} />
+          <Route path="/global" element={<RequireAuth><GlobalPage /></RequireAuth>} />
+          <Route path="/equipo/:id" element={<RequireAuth><EquipoPage /></RequireAuth>} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+        <StatusWidget />
+      </div>
+    </AuthProvider>
   );
 }

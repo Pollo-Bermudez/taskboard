@@ -92,7 +92,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Deps:** T2, T4
 **Files:** `backend/src/routes/auth.js`, `backend/src/middleware/auth.js`, `backend/src/app.js`, `backend/package.json`, `backend/test/auth.test.js`
 
-### - [ ] T7: Login UI (M)
+### - [x] T7: Login UI (M)
 `LoginPage`; contexto de sesión (`/api/auth/me` al cargar); cliente API: ante 401 llama `/api/auth/refresh` una sola vez (sin carreras con varias peticiones simultáneas) y reintenta, si falla → `/login`. Guardas de ruta; botón logout; tras login redirige a `/equipo/{equipo_id}`.
 
 **Acceptance:**
@@ -105,8 +105,8 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Files:** `frontend/src/pages/LoginPage.jsx`, `frontend/src/auth/AuthContext.jsx`, `frontend/src/api/client.js`, `frontend/src/App.jsx`
 
 ## Checkpoint 2: Auth
-- [ ] `npm test` pasa · build frontend OK
-- [ ] Login → `/global` funcional en Compose
+- [x] `npm test` pasa (22 con BD) · build frontend OK
+- [x] Login → `/global` funcional en Compose; refresh automático verificado con `ACCESS_TOKEN_TTL=5s`; cookies invisibles a JS, storage vacío
 - [ ] Revisión humana
 
 ---
