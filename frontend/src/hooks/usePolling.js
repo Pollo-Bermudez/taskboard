@@ -7,14 +7,19 @@ export function usePolling(load, intervalMs) {
   const [updatedAt, setUpdatedAt] = useState(null);
   const loadRef = useRef(load);
   loadRef.current = load;
+  // Solo se aplica la respuesta de la petición más reciente: una lenta y vieja no pisa datos nuevos.
+  const ultimaPeticion = useRef(0);
 
   const refresh = useCallback(async () => {
+    const id = ++ultimaPeticion.current;
     try {
-      setData(await loadRef.current());
+      const resultado = await loadRef.current();
+      if (id !== ultimaPeticion.current) return;
+      setData(resultado);
       setError(null);
       setUpdatedAt(new Date());
     } catch (err) {
-      setError(err);
+      if (id === ultimaPeticion.current) setError(err);
     }
   }, []);
 

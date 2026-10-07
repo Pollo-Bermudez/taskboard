@@ -23,7 +23,7 @@ CMD ["npm", "test"]
 FROM node:20-alpine AS runtime-base
 RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx \
       /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-* \
- && addgroup -S app && adduser -S app -G app
+ && addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 
 # ---------- Etapa 3: ejecución ----------
 FROM scratch
@@ -35,6 +35,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --chown=app:app package.json ./
 COPY --chown=app:app src ./src
 COPY --chown=app:app migrations ./migrations
-USER app
+# UID numérico para que Kubernetes pueda verificar runAsNonRoot.
+USER 10001:10001
 EXPOSE 3000
 CMD ["node", "src/server.js"]

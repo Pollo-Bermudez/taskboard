@@ -19,7 +19,7 @@ function createApp({ pool, config, isReady }) {
 
   // Públicas: probes y autenticación.
   app.use('/api', healthRouter({ pool, isReady }));
-  app.use('/api/auth', authRouter({ pool, auth }));
+  app.use('/api/auth', authRouter({ pool, auth, bcryptRounds: config.bcryptRounds }));
   app.get('/api', (req, res) => {
     res.status(200).json({ name: 'TaskBoard API', version: '1.0.0' });
   });

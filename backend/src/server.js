@@ -46,5 +46,9 @@ function shutdown(signal) {
   });
   setTimeout(() => process.exit(1), 10000).unref();
 }
+// Red de seguridad: una promesa rechazada sin manejar se registra en lugar de tumbar el proceso.
+process.on('unhandledRejection', (reason) => {
+  console.error('[TaskBoard Backend] Promesa rechazada sin manejar:', reason);
+});
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));

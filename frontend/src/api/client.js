@@ -41,11 +41,11 @@ export async function api(path, options = {}) {
   let res = await request(path, options);
 
   if (res.status === 401 && !SIN_REINTENTO.includes(path)) {
-    if (await refreshSession()) {
-      res = await request(path, options);
-    } else {
-      onSessionExpired();
-    }
+    // Aunque el refresh falle se reintenta una vez: otra pestaña pudo haber renovado
+    // la sesión y el navegador ya tiene las cookies nuevas.
+    await refreshSession();
+    res = await request(path, options);
+    if (res.status === 401) onSessionExpired();
   }
 
   if (res.status === 204) return null;

@@ -6,6 +6,10 @@ function loadConfig(env = process.env) {
     throw new Error(`Faltan variables de entorno obligatorias: ${missing.join(', ')}`);
   }
 
+  if (env.NODE_ENV === 'production' && (env.JWT_SECRET.length < 32 || /cambia|tu_clave|genera_con/i.test(env.JWT_SECRET))) {
+    throw new Error('JWT_SECRET debe tener al menos 32 caracteres aleatorios (openssl rand -hex 32)');
+  }
+
   return {
     nodeEnv: env.NODE_ENV || 'production',
     port: parseInt(env.PORT, 10) || 3000,

@@ -65,6 +65,16 @@ test('access token expirado o manipulado responde 401', opts, async () => {
   }
 });
 
+test('reuso inmediato (carrera entre pestañas) responde 401 sin revocar la familia', opts, async () => {
+  const login = await request(app).post('/api/auth/login').send({ correo: USUARIOS.devops, password: TEST_PASSWORD });
+  const original = cookie(login, 'tb_refresh').split(';')[0];
+  const rotado = await request(app).post('/api/auth/refresh').set('Cookie', original);
+  const nuevo = cookie(rotado, 'tb_refresh').split(';')[0];
+
+  assert.equal((await request(app).post('/api/auth/refresh').set('Cookie', original)).status, 401);
+  assert.equal((await request(app).post('/api/auth/refresh').set('Cookie', nuevo)).status, 200);
+});
+
 test('refresh rota el token y detecta reuso revocando la familia', opts, async () => {
   const login = await request(app).post('/api/auth/login').send({ correo: USUARIOS.frontend, password: TEST_PASSWORD });
   const original = cookie(login, 'tb_refresh').split(';')[0];
@@ -75,7 +85,8 @@ test('refresh rota el token y detecta reuso revocando la familia', opts, async (
   assert.notEqual(nuevo, original);
   assert.ok(cookie(rotado, 'tb_access'));
 
-  // Reusar el token original (ya rotado) invalida también el nuevo.
+  // Reusar el token original fuera de la ventana de gracia invalida también el nuevo.
+  await db.pool.query("UPDATE refresh_tokens SET revocado_en = NOW() - interval '1 minute' WHERE revocado_en IS NOT NULL");
   const reuso = await request(app).post('/api/auth/refresh').set('Cookie', original);
   assert.equal(reuso.status, 401);
   const despues = await request(app).post('/api/auth/refresh').set('Cookie', nuevo);

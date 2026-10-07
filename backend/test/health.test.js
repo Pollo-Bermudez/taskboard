@@ -44,3 +44,17 @@ test('loadConfig falla si falta JWT_SECRET', () => {
     /JWT_SECRET/,
   );
 });
+
+test('loadConfig rechaza JWT_SECRET débil en producción', () => {
+  const base = { DB_HOST: 'db', DB_NAME: 'x', DB_USER: 'u', DB_PASSWORD: 'p', NODE_ENV: 'production' };
+  assert.throws(() => loadConfig({ ...base, JWT_SECRET: 'corta' }), /32/);
+  assert.throws(() => loadConfig({ ...base, JWT_SECRET: 'tu_clave_secreta_jwt_aqui_cambiala_en_produccion' }), /32/);
+  assert.ok(loadConfig({ ...base, JWT_SECRET: 'a'.repeat(64) }));
+});
+
+test('refresh con la base de datos caída responde 500 sin tumbar el proceso', async () => {
+  const app = createApp({ pool: fakePool({ fail: true }), config: TEST_CONFIG });
+  const res = await request(app).post('/api/auth/refresh').set('Cookie', 'tb_refresh=abc');
+  assert.equal(res.status, 500);
+  assert.doesNotMatch(JSON.stringify(res.body), /timeout/);
+});

@@ -288,5 +288,5 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 
 Ninguna bloqueante. Nuevas dudas se agregan aquí durante la implementación.
 
-- **🔍 POR REVISAR – Rate limiting de login (DV-16):** no hay límite de intentos en `POST /api/auth/login`. Un limitador en memoria es por réplica (con HPA 2–6 el límite real se multiplica). Opciones: (a) limitador en memoria por IP (simple, suficiente para el proyecto); (b) contador en PostgreSQL por correo (consistente entre réplicas); (c) dejarlo fuera de alcance y documentarlo.
-- **Nota – Refresh concurrente entre pestañas:** si dos pestañas refrescan con el mismo token a la vez, la segunda se interpreta como reuso y cierra la sesión. El frontend evita carreras dentro de una pestaña; entre pestañas es un caso raro y se acepta.
+- **🔍 POR REVISAR – Rate limiting de login (DV-16):** no hay límite de intentos en `POST /api/auth/login`. Un limitador en memoria es por réplica (con HPA 2–6 el límite real se multiplica). Opciones: (a) limitador en memoria por IP (simple, suficiente para el proyecto); (b) contador en PostgreSQL por correo (consistente entre réplicas); (c) dejarlo fuera de alcance y documentarlo. Nota: con `trust proxy` y el backend publicado en `3001` para depuración, `X-Forwarded-For` es falsificable; un limitador por IP solo es fiable detrás de NGINX/Ingress.
+- **Resuelto – Refresh concurrente entre pestañas:** un token rotado hace < 30 s responde 401 sin revocar la familia, y el cliente reintenta la petición original con las cookies ya renovadas por la otra pestaña.

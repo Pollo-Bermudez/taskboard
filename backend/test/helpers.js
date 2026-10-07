@@ -16,6 +16,10 @@ function fakePool({ fail = false } = {}) {
       if (fail) throw new Error('connect ECONNREFUSED 10.0.0.1:5432');
       return { rows: [] };
     },
+    connect: async () => {
+      if (fail) throw new Error('timeout exceeded when trying to connect');
+      throw new Error('fakePool.connect no implementado');
+    },
   };
 }
 

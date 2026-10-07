@@ -4,23 +4,26 @@ const { hashToken, REFRESH_COOKIE } = require('../auth');
 const { requireAuth } = require('../middleware/auth');
 const { HttpError } = require('../errors');
 
-// Hash ficticio para que un correo inexistente tarde lo mismo que una contraseña incorrecta.
-const DUMMY_HASH = bcrypt.hashSync('dummy-password-no-valida', 12);
+// Un token rotado hace menos de esto se considera carrera entre pestañas, no robo.
+const REUSE_GRACE_SECONDS = 30;
 
 const USUARIO_PUBLICO = `
   SELECT u.id, u.nombre, u.correo, u.rol, u.equipo_id, e.nombre AS equipo_nombre, e.color_hex AS equipo_color
     FROM usuarios u JOIN equipos e ON e.id = u.equipo_id`;
 
-function authRouter({ pool, auth }) {
+function authRouter({ pool, auth, bcryptRounds }) {
   const router = express.Router();
+  // Hash ficticio con el mismo costo que los reales: un correo inexistente tarda lo mismo
+  // que una contraseña incorrecta y no revela qué correos existen.
+  const dummyHash = bcrypt.hashSync('dummy-password-no-valida', bcryptRounds);
 
   async function startSession(res, db, usuario, familia) {
     const refreshToken = await auth.issueRefreshToken(db, usuario.id, familia);
     auth.setSessionCookies(res, auth.signAccessToken(usuario), refreshToken);
   }
 
-  async function usuarioPublico(id) {
-    const { rows } = await pool.query(`${USUARIO_PUBLICO} WHERE u.id = $1`, [id]);
+  async function usuarioPublico(id, db = pool) {
+    const { rows } = await db.query(`${USUARIO_PUBLICO} WHERE u.id = $1`, [id]);
     return rows[0];
   }
 
@@ -36,7 +39,7 @@ function authRouter({ pool, auth }) {
         [correo.trim()],
       );
       const usuario = rows[0];
-      const valid = await bcrypt.compare(password, usuario?.password_hash || DUMMY_HASH);
+      const valid = await bcrypt.compare(password, usuario?.password_hash || dummyHash);
       if (!usuario || !usuario.password_hash || !valid) {
         throw new HttpError(401, 'Credenciales inválidas');
       }
@@ -53,16 +56,18 @@ function authRouter({ pool, auth }) {
     const token = req.cookies?.[REFRESH_COOKIE];
     if (!token) return res.status(401).json({ error: 'No autenticado' });
 
-    const client = await pool.connect();
+    let client;
     try {
+      client = await pool.connect();
       await client.query('BEGIN');
       const { rows } = await client.query(
         `SELECT rt.id, rt.familia, rt.revocado_en, rt.expira_en < NOW() AS expirado,
+                rt.revocado_en > NOW() - make_interval(secs => $2) AS rotado_reciente,
                 u.id AS usuario_id, u.equipo_id, u.rol
            FROM refresh_tokens rt JOIN usuarios u ON u.id = rt.usuario_id
           WHERE rt.token_hash = $1
           FOR UPDATE OF rt`,
-        [hashToken(token)],
+        [hashToken(token), REUSE_GRACE_SECONDS],
       );
       const actual = rows[0];
 
@@ -70,6 +75,12 @@ function authRouter({ pool, auth }) {
         await client.query('COMMIT');
         auth.clearSessionCookies(res);
         return res.status(401).json({ error: 'Sesión expirada' });
+      }
+
+      if (actual.revocado_en && actual.rotado_reciente) {
+        // Otra pestaña acaba de rotarlo: el navegador ya tiene la cookie nueva. Sin revocar nada.
+        await client.query('COMMIT');
+        return res.status(401).json({ error: 'Sesión renovada en otra pestaña' });
       }
 
       if (actual.revocado_en) {
@@ -87,13 +98,14 @@ function authRouter({ pool, auth }) {
       await client.query('UPDATE refresh_tokens SET revocado_en = NOW() WHERE id = $1', [actual.id]);
       const usuario = { id: actual.usuario_id, equipo_id: actual.equipo_id, rol: actual.rol };
       await startSession(res, client, usuario, actual.familia);
+      const publico = await usuarioPublico(usuario.id, client);
       await client.query('COMMIT');
-      res.json({ usuario: await usuarioPublico(usuario.id) });
+      res.json({ usuario: publico });
     } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
+      await client?.query('ROLLBACK').catch(() => {});
       next(err);
     } finally {
-      client.release();
+      client?.release();
     }
   });
 

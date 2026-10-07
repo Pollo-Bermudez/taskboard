@@ -149,9 +149,9 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Files:** `frontend/src/pages/EquipoPage.jsx`, `frontend/src/components/{TaskCard,TaskForm}.jsx`, `frontend/src/index.css`
 
 ## Checkpoint 3: App completa en Compose
-- [ ] Criterios de éxito 1, 2 y 6 cumplidos
-- [ ] `npm test` pasa · imágenes < 150 MB
-- [ ] Revisión con `/review` (skill `code-review-and-quality`) + `security-auditor`
+- [x] Criterios de éxito 1, 2 y 6 cumplidos
+- [x] `npm test` pasa (10 sin BD, 37 con BD) · imágenes < 150 MB
+- [x] Revisión `code-review-and-quality` + `security-auditor`: 1 crítico (refresh tumbaba el proceso con BD caída), 2 importantes (cambio de equipo mostraba tareas ajenas editables; refresh concurrente cerraba sesión) y sugerencias (JWT_SECRET débil, unicidad de correo, CSP, timing de login) — corregidos
 - [ ] Revisión humana
 
 ---
