@@ -7,7 +7,7 @@
 
 ## Phase 1: Foundation
 
-### - [ ] T1: Backend modular y endurecido (M)
+### - [x] T1: Backend modular y endurecido (M)
 Separar `app.js` de `server.js`, extraer Pool a `db.js`, rutas de salud a `routes/health.js`, middleware de errores centralizado. Hardening: quitar credenciales por defecto (fallar al arrancar si faltan `DB_PASSWORD`/`JWT_SECRET`), `/api/ready` con error genérico (detalle solo a logs), quitar `cors()` abierto, `express.json({ limit: '100kb' })`. Agregar `node:test` + `supertest`.
 
 **Acceptance:**
@@ -19,7 +19,7 @@ Separar `app.js` de `server.js`, extraer Pool a `db.js`, rutas de salud a `route
 **Deps:** ninguna
 **Files:** `backend/src/{server,app,db}.js`, `backend/src/routes/health.js`, `backend/src/middleware/errorHandler.js`, `backend/package.json`, `backend/test/health.test.js`
 
-### - [ ] T2: Migraciones + 001 auth (M)
+### - [x] T2: Migraciones + 001 auth (M)
 Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_lock`, aplica `db/migrations/*.sql` pendientes en orden, en transacción. Migración `001_auth.sql`: `usuarios.password_hash`, tabla `refresh_tokens (id, usuario_id, token_hash, familia, expira_en, revocado_en, creado_en)`, trigger `actualizado_en`, `UNIQUE (equipos.nombre)`. Tras migrar, hashear `SEED_USER_PASSWORD` (bcrypt 12) en usuarios sin hash. Copiar `db/migrations` a la imagen del backend.
 
 **Acceptance:**
@@ -29,7 +29,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 
 **Verify:** `docker compose down -v && docker compose up -d --build` · `docker compose exec db psql -U $DB_USER -d taskboard -c 'select * from schema_migrations'` · `docker compose up -d --scale backend=2` (sin conflicto de puertos: probar con override temporal)
 **Deps:** T1
-**Files:** `backend/src/migrate.js`, `backend/src/server.js`, `db/migrations/001_auth.sql`, `backend/Dockerfile`, `.env.example`
+**Files:** `backend/src/migrate.js`, `backend/src/server.js`, `backend/migrations/001_auth.sql` (DV-14), `backend/Dockerfile`, `.env.example`
 
 ### - [ ] T3: NGINX no-root + template + headers (M)
 `USER nginx`, permisos sobre `/var/cache/nginx`, `/var/run`/pid, `/etc/nginx/conf.d`; escucha 8080. `nginx.conf` → `templates/default.conf.template` con `${BACKEND_HOST}`. Headers `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`. Compose `8080:8080` + `BACKEND_HOST=backend`. Actualizar `AGENTS.md` (puertos 3001 y 8080 interno). (DV-02, DV-07, DV-11)

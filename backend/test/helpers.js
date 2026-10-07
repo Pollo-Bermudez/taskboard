@@ -7,6 +7,7 @@ const TEST_CONFIG = {
   refreshTokenTtlDays: 3,
   cookieSecure: false,
   seedUserPassword: null,
+  bcryptRounds: 4,
 };
 
 function fakePool({ fail = false } = {}) {

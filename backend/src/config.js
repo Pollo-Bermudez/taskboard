@@ -21,6 +21,7 @@ function loadConfig(env = process.env) {
     refreshTokenTtlDays: parseInt(env.REFRESH_TOKEN_TTL_DAYS, 10) || 3,
     cookieSecure: env.COOKIE_SECURE === 'true',
     seedUserPassword: env.SEED_USER_PASSWORD || null,
+    bcryptRounds: parseInt(env.BCRYPT_ROUNDS, 10) || 12,
   };
 }
 

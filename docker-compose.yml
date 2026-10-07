@@ -19,6 +19,10 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-3}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-}
     ports:
       - "3001:3000"
     depends_on:
@@ -26,6 +30,28 @@ services:
         condition: service_healthy
     networks:
       - red-publica
+      - red-interna
+
+  # Pruebas de API contra una base de datos temporal:
+  #   docker compose --profile test run --rm backend-test
+  backend-test:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      target: test
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_ADMIN_NAME: taskboard
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      INIT_SQL_PATH: /db/init.sql
+    volumes:
+      - ./db/init.sql:/db/init.sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
       - red-interna
 
   db:

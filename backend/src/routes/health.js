@@ -1,6 +1,6 @@
 const express = require('express');
 
-function healthRouter({ pool }) {
+function healthRouter({ pool, isReady = () => true }) {
   const router = express.Router();
 
   // Liveness: solo verifica que el proceso responde.
@@ -8,8 +8,11 @@ function healthRouter({ pool }) {
     res.status(200).json({ status: 'ok' });
   });
 
-  // Readiness: verifica la conexión con PostgreSQL. 503 saca al Pod del balanceo sin reiniciarlo.
+  // Readiness: migraciones aplicadas + conexión con PostgreSQL. 503 saca al Pod del balanceo sin reiniciarlo.
   router.get('/ready', async (req, res) => {
+    if (!isReady()) {
+      return res.status(503).json({ status: 'starting' });
+    }
     try {
       await pool.query('SELECT 1');
       res.status(200).json({ status: 'ready' });

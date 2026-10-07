@@ -3,6 +3,7 @@ require('dotenv').config();
 const { loadConfig } = require('./config');
 const { createPool } = require('./db');
 const { createApp } = require('./app');
+const { runMigrations, seedPasswords } = require('./migrate');
 
 let config;
 try {
@@ -13,11 +14,28 @@ try {
 }
 
 const pool = createPool(config.db);
-const app = createApp({ pool, config });
+let ready = false;
+const app = createApp({ pool, config, isReady: () => ready });
 
+// Se escucha antes de migrar: liveness responde de inmediato y readiness
+// devuelve 503 hasta que la base de datos esté migrada.
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`[TaskBoard Backend] Servidor ejecutándose en el puerto ${config.port}`);
 });
+
+async function prepareDatabase(attempt = 1) {
+  try {
+    await runMigrations(pool);
+    await seedPasswords(pool, config.seedUserPassword, { rounds: config.bcryptRounds });
+    ready = true;
+    console.log('[TaskBoard Backend] Base de datos lista');
+  } catch (err) {
+    const delay = Math.min(1000 * 2 ** (attempt - 1), 15000);
+    console.error(`[TaskBoard Backend] Preparación de BD falló (intento ${attempt}): ${err.message}. Reintento en ${delay} ms`);
+    setTimeout(() => prepareDatabase(attempt + 1), delay).unref();
+  }
+}
+prepareDatabase();
 
 // Apagado ordenado: Kubernetes envía SIGTERM antes de eliminar el Pod.
 function shutdown(signal) {

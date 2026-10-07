@@ -279,6 +279,7 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-10 (D10) | `taskboard.local` sin pasos | `/etc/hosts` + `minikube tunnel` | Driver docker en macOS |
 | DV-11 (P4) | Backend `3000:3000` | `3001:3000` | Puerto 3000 ocupado en el host |
 | DV-12 (P1) | JWT sin login definido; `usuarios` sin contraseña | Login + access 15 min + refresh 3 días rotativo en cookies httpOnly; `password_hash`, tabla `refresh_tokens` | Tabla 2 no cubría autenticación |
+| DV-14 | Migraciones en `db/migrations/` | `backend/migrations/`; pruebas con BD en servicio `backend-test` (perfil `test`) | El contexto de build del backend es `./backend`; el backend las aplica al arrancar |
 | DV-13 (P6) | Respaldos/migraciones solo mencionados en Tabla 1 | `db/migrations/` + `schema_migrations`; `pg_dump` script + CronJob | Necesario para evolucionar el esquema |
 
 ## Open Questions
