@@ -244,7 +244,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Deps:** T12, T16
 **Files:** `k8s/db-backup-cronjob.yaml`, `k8s/networkpolicy.yaml`
 
-### - [ ] T18: Evidencias (M)
+### - [ ] T18: Evidencias (M) — ✅ criterios 1, 2, 6 documentados · 🔍 POR REVISAR: 3, 4, 5, 7 (requieren Minikube)
 `docs/evidencias.md` con comando, salida y captura de cada criterio de éxito (1–7) y del registro de desviaciones.
 
 **Acceptance:**
