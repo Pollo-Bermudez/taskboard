@@ -1,0 +1,16 @@
+# Headless: identidad de red estable para el Pod del StatefulSet. Sin exposición externa.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-svc
+  namespace: taskboard
+  labels:
+    app: postgres
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

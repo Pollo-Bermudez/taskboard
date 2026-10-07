@@ -172,7 +172,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 
 ## Phase 6: Kubernetes
 
-### - [ ] T12: Base K8s + Postgres (M)
+### - [ ] T12: Base K8s + Postgres (M) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `namespace.yaml`, `configmap.yaml` (`NODE_ENV`, `PORT`, `DB_HOST=db-svc`, `DB_PORT`, `DB_NAME`, `POSTGRES_DB`, `COOKIE_SECURE=false`, `ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_TTL_DAYS`, `BACKEND_HOST=backend-svc`), `secret.example.yaml`, `storageclass.yaml` (`standard-retain`), `db-statefulset.yaml` (OnDelete, PVC 5Gi, env mapeado, probes `sh -c`, recursos 250m/1000m 256Mi/1Gi, `init.sql` vía ConfigMap), `db-service.yaml` headless. `.gitignore`: `k8s/secret.yaml`, `.env.k8s`. (DV-03, DV-04, DV-05)
 
 **Acceptance:**
@@ -183,7 +183,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Deps:** T2
 **Files:** `k8s/{namespace,configmap,secret.example,storageclass,db-statefulset,db-service}.yaml`, `.gitignore`
 
-### - [ ] T13: Backend + frontend en K8s (M)
+### - [ ] T13: Backend + frontend en K8s (M) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `backend-deployment.yaml` (2 réplicas, RollingUpdate 0/1, envFrom, probes Tabla 12, recursos 100m/500m 128Mi/512Mi, `runAsNonRoot`), `backend-service.yaml`; `frontend-deployment.yaml` (2 réplicas, puerto 8080, probes en 8080, recursos 50m/200m 64Mi/128Mi, `runAsNonRoot`), `frontend-service.yaml` (80 → 8080). `scripts/k8s-build.sh` (minikube docker-env + build tags `1.0.0`). `imagePullPolicy: IfNotPresent`. (DV-07, DV-09)
 
 **Acceptance:**
@@ -194,7 +194,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Deps:** T3, T12
 **Files:** `k8s/{backend-deployment,backend-service,frontend-deployment,frontend-service}.yaml`, `scripts/k8s-build.sh`
 
-### - [ ] T14: Ingress (S)
+### - [ ] T14: Ingress (S) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `ingress.yaml` sin rewrite, `/api` → backend-svc:3000, `/` → frontend-svc:80, host `taskboard.local`. Documentar `/etc/hosts` + `minikube tunnel` en `docs/despliegue-k8s.md`. (DV-01, DV-10)
 
 **Acceptance:**
@@ -205,6 +205,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Files:** `k8s/ingress.yaml`, `docs/despliegue-k8s.md`
 
 ## Checkpoint 4: App en Minikube
+> 🔍 **POR REVISAR (requiere tu acción):** Minikube no está instalado (`brew install minikube`). Instalar software es una descarga que necesita tu aprobación. Con Minikube instalado, seguir `docs/despliegue-k8s.md` (3 comandos: `minikube start …`, `scripts/k8s-build.sh`, `scripts/k8s-deploy.sh`) o pídeme que lo ejecute.
 - [ ] App completa en `taskboard.local`
 - [ ] Criterios 3 y 4 cumplidos
 - [ ] Revisión humana
@@ -213,7 +214,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 
 ## Phase 7: Resiliencia
 
-### - [ ] T15: HPA (S)
+### - [ ] T15: HPA (S) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `backend-hpa.yaml` (2–6, CPU 70 %, memoria 75 %, scaleDown 300 s). Medir memoria idle del backend antes; ajustar request si hace falta (registrar desviación). Script de carga.
 
 **Acceptance:**
@@ -223,7 +224,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Deps:** T14
 **Files:** `k8s/backend-hpa.yaml`, `scripts/load-test.sh`
 
-### - [ ] T16: NetworkPolicy (S)
+### - [ ] T16: NetworkPolicy (S) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `networkpolicy.yaml`: ingreso a `app: postgres` solo desde `app: backend` en 5432. Requiere `minikube start --cni=calico` (documentar). (DV-06)
 
 **Acceptance:**
@@ -233,7 +234,7 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 **Deps:** T12
 **Files:** `k8s/networkpolicy.yaml`, `docs/despliegue-k8s.md`
 
-### - [ ] T17: CronJob de respaldo (S)
+### - [ ] T17: CronJob de respaldo (S) — ✅ manifiesto/script listo y validado estáticamente · 🔍 POR REVISAR: ejecución en Minikube (no instalado en esta máquina)
 `db-backup-cronjob.yaml` diario `pg_dump -Fc` a PVC `db-backups` (StorageClass `standard-retain`), retiene últimos 7. Etiqueta `app: backend`-equivalente permitida por NetworkPolicy (agregar regla para `app: db-backup`).
 
 **Acceptance:**

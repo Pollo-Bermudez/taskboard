@@ -1,0 +1,72 @@
+# Respaldo diario con pg_dump hacia un PVC propio; conserva los 7 más recientes.
+# Ejecución manual: kubectl -n taskboard create job --from=cronjob/db-backup db-backup-manual
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-backups
+  namespace: taskboard
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: standard-retain
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: taskboard
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: db-backup
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            fsGroup: 70
+          containers:
+            - name: pg-dump
+              image: postgres:16-alpine
+              env:
+                - name: PGHOST
+                  value: db-svc
+                - name: PGDATABASE
+                  valueFrom:
+                    configMapKeyRef: { name: app-config, key: POSTGRES_DB }
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef: { name: db-credentials, key: DB_USER }
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef: { name: db-credentials, key: DB_PASSWORD }
+              command:
+                - sh
+                - -c
+                - |
+                  set -eu
+                  FILE=/backups/taskboard-$(date +%Y%m%d-%H%M%S).dump
+                  pg_dump -Fc -f "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+                  echo "Respaldo creado: $FILE"
+                  ls -1t /backups/*.dump | tail -n +8 | xargs -r rm --
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+              resources:
+                requests: { cpu: 50m, memory: 64Mi }
+                limits: { cpu: 500m, memory: 256Mi }
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: db-backups
