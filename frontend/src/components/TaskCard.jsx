@@ -13,11 +13,7 @@ export default function TaskCard({ tarea, mostrarEstado = false, children }) {
   return (
     <div className="task-card">
       <div className="card-top">
-        {mostrarEstado ? (
-          <span className={`card-tag estado-${tarea.estado}`}>{ESTADO_TITULO[tarea.estado]}</span>
-        ) : (
-          <span className="card-tag">{tarea.equipo_nombre}</span>
-        )}
+        {mostrarEstado ? <span className={`card-tag estado-${tarea.estado}`}>{ESTADO_TITULO[tarea.estado]}</span> : <span />}
         <span className={`priority-badge priority-${tarea.prioridad}`}>{tarea.prioridad}</span>
       </div>
       <h4 className="card-title">{tarea.titulo}</h4>

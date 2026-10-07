@@ -113,7 +113,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 
 ## Phase 4: Panel de equipo y escritura
 
-### - [ ] T8: Panel de equipo — lectura (M)
+### - [x] T8: Panel de equipo — lectura (M)
 `GET /api/tareas?equipo_id=N` (validar entero). `EquipoPage` con 4 columnas Kanban y datos reales; reemplaza maqueta de `App.jsx`. Endpoint `GET /api/equipos/:id/usuarios` para selector de responsable.
 
 **Acceptance:**
@@ -136,7 +136,7 @@ Runner en `backend/src/migrate.js`: crea `schema_migrations`, toma `pg_advisory_
 **Deps:** T6, T8
 **Files:** `backend/src/routes/tareas.js`, `backend/src/validation.js`, `backend/test/tareas-escritura.test.js`
 
-### - [ ] T10: Kanban interactivo (M)
+### - [x] T10: Kanban interactivo (M)
 Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estado (botones o drag & drop nativo), borrar con confirmación. Si `/equipo/:id` ≠ equipo del usuario → modo solo lectura. Errores de API visibles.
 
 **Acceptance:**

@@ -359,7 +359,9 @@ body {
 
 .card-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   align-items: center;
   padding-top: 0.4rem;
   border-top: 1px dashed #f1f5f9;
@@ -670,4 +672,110 @@ body {
 
 .page-loading {
   padding: 2rem;
+}
+
+/* Panel de equipo */
+.board-title .team-dot {
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.draggable {
+  cursor: grab;
+}
+
+.draggable:active {
+  cursor: grabbing;
+}
+
+.drop-target {
+  outline: 2px dashed #93c5fd;
+  outline-offset: -4px;
+}
+
+.empty-column {
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.icon-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-body);
+  border-radius: 6px;
+  width: 1.9rem;
+  height: 1.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--bg-main);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.icon-btn.danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+  border-color: #fca5a5;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  color: var(--text-title);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
