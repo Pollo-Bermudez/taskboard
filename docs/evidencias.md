@@ -8,7 +8,7 @@ Criterios de éxito del spec (`docs/specs/SPEC.md` §8, derivados de §7.2 del P
 | 2 | Imágenes frontend y backend < 150 MB | Docker | ✅ |
 | 3 | Borrar Pod backend no interrumpe el servicio | Minikube | ✅ |
 | 4 | Borrar Pod PostgreSQL conserva datos | Minikube | ✅ |
-| 5 | HPA escala con carga y desescala sin ella | Minikube | ✅ subida · ⏳ bajada (ver abajo) |
+| 5 | HPA escala con carga y desescala sin ella | Minikube | ✅ |
 | 6 | Vista global con todos los equipos; modificar tarea ajena → rechazado por el servidor | Docker Compose | ✅ |
 | 7 | NetworkPolicy aísla PostgreSQL | Minikube | ✅ |
 
@@ -138,7 +138,13 @@ SuccessfulRescale  New size: 6; reason: cpu resource utilization (percentage of 
 cpu 118% (118m) / 70%   ·   6 current / 6 desired   ·   ScalingLimited: TooManyReplicas (máximo 6)
 ```
 
-**Bajada:** al hacer este commit (14:12 UTC) seguían 6 réplicas: la carga terminó ~14:07 y la ventana de estabilización es de 300 s. Se completa en un commit posterior con el evento `SuccessfulRescale` de vuelta a 2.
+Bajada, tras terminar la carga (~14:07 UTC) y respetar la ventana de estabilización de 300 s:
+
+```
+2026-10-07T14:13:41Z  New size: 3; reason: All metrics below target
+2026-10-07T14:18:42Z  New size: 2; reason: All metrics below target
+backend-hpa  cpu: 1%/70%, memory: 25%/75%  ·  REPLICAS 2
+```
 
 ## Criterio 7 — NetworkPolicy
 
