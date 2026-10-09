@@ -281,5 +281,5 @@ Merge con `main` resuelto sobre la arquitectura modular; sonda `/api/cache`; ser
 ### - [x] I2: Límite de intentos de login (DV-16)
 Contador por correo en PostgreSQL (migración 003): 5 fallos en 15 min → 429 + `Retry-After`. 3 pruebas nuevas (43 con BD).
 
-### - [ ] I3: 🔍 POR REVISAR — PR a `main`
-Rama `taskboard-agent-skills-analysis` publicada. El PR se abre desde la web: la cuenta de `gh` local no es colaboradora del repositorio.
+### - [x] I3: PR a `main`
+Integrado en `main` (PR #1).
