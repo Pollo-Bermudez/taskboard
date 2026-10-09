@@ -270,3 +270,16 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 
 ### - [x] D2: Aplicar Nocturne al frontend
 `nocturne.css` (copia exacta) + `app.css`; barra lateral con equipos y estado del sistema; carriles con pestañas en móvil; matriz global; diálogos propios (tarea, eliminar) con foco y Escape; avisos breves; esqueletos de carga, error con reintento, tablero vacío y 404. Verificado en navegador (escritorio 1440 y móvil 375).
+
+---
+
+## Integración y entrega
+
+### - [x] I1: Integrar caché Redis de `main` (DV-19)
+Merge con `main` resuelto sobre la arquitectura modular; sonda `/api/cache`; servicio `cache` en Compose; Deployment, Service y NetworkPolicy en K8s. Validado en Compose y Minikube.
+
+### - [ ] I2: 🔍 POR REVISAR — Límite de intentos de login (DV-16)
+Opciones en `docs/specs/SPEC.md` (Open Questions): limitador en memoria por IP, contador en PostgreSQL por correo, o fuera de alcance.
+
+### - [ ] I3: 🔍 POR REVISAR — PR a `main`
+Rama `taskboard-agent-skills-analysis` publicada. El PR se abre desde la web: la cuenta de `gh` local no es colaboradora del repositorio.
