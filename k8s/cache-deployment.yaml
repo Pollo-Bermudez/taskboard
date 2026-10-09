@@ -1,0 +1,55 @@
+# Caché Redis. Sin estado que deba sobrevivir: emptyDir basta (si se reinicia, la caché se vuelve a llenar).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cache
+  namespace: taskboard
+  labels:
+    app: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache
+  template:
+    metadata:
+      labels:
+        app: cache
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 2
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 250m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          emptyDir: {}

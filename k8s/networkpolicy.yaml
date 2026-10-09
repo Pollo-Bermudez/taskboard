@@ -1,0 +1,45 @@
+# Solo el backend (y el CronJob de respaldo) pueden conectar a PostgreSQL.
+# Requiere un CNI que aplique NetworkPolicy: minikube start --cni=calico (DV-06).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-allow-backend
+  namespace: taskboard
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend
+        - podSelector:
+            matchLabels:
+              app: db-backup
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+# Solo el backend puede conectar a Redis.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cache-allow-backend
+  namespace: taskboard
+spec:
+  podSelector:
+    matchLabels:
+      app: cache
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: 6379

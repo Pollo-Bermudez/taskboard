@@ -1,0 +1,26 @@
+# Configuración no sensible. Las credenciales van en el Secret db-credentials.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: taskboard
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  DB_HOST: db-svc
+  DB_PORT: "5432"
+  DB_NAME: taskboard
+  POSTGRES_DB: taskboard
+  REDIS_HOST: cache-svc
+  REDIS_PORT: "6379"
+  ACCESS_TOKEN_TTL: 15m
+  REFRESH_TOKEN_TTL_DAYS: "3"
+  LOGIN_MAX_INTENTOS: "5"
+  LOGIN_VENTANA_MIN: "15"
+  # true solo si el Ingress sirve HTTPS; con http://taskboard.local el navegador descartaría la cookie.
+  COOKIE_SECURE: "false"
+  # Frontend: FQDN porque el resolver de NGINX no aplica dominios de búsqueda (DV-02).
+  BACKEND_HOST: backend-svc.taskboard.svc.cluster.local
+  BACKEND_PORT: "3000"
+  # Informativa: el bundle de Vite usa /api relativo (DV-08).
+  API_BASE_URL: /api

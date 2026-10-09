@@ -35,3 +35,10 @@ Thumbs.db
 # Testing & Coverage
 coverage/
 .nyc_output/
+
+# Respaldos locales de PostgreSQL
+backups/
+
+# Kubernetes: Secret real y variables para crearlo
+k8s/secret.yaml
+.env.k8s

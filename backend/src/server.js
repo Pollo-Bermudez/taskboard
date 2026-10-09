@@ -1,104 +1,56 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
-const { createClient } = require('redis');
-require('dotenv').config();
+// dotenv es dependencia de desarrollo: en contenedores las variables llegan del entorno.
+try { require('dotenv').config(); } catch { /* no instalado en producción */ }
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const { loadConfig } = require('./config');
+const { createPool } = require('./db');
+const { createApp } = require('./app');
+const { createCache } = require('./cache');
+const { runMigrations, seedPasswords } = require('./migrate');
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+let config;
+try {
+  config = loadConfig();
+} catch (err) {
+  console.error(`[TaskBoard Backend] ${err.message}`);
+  process.exit(1);
+}
 
-// Configuración del Pool de PostgreSQL
-const pool = new Pool({
-  host: process.env.DB_HOST || 'db',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  database: process.env.DB_NAME || 'taskboard',
-  user: process.env.DB_USER || 'taskboard_user',
-  password: process.env.DB_PASSWORD || 'taskboard_pass',
-  connectionTimeoutMillis: 3000,
+const pool = createPool(config.db);
+const cache = createCache(config.redis);
+let ready = false;
+const app = createApp({ pool, cache, config, isReady: () => ready });
+
+// Se escucha antes de migrar: liveness responde de inmediato y readiness
+// devuelve 503 hasta que la base de datos esté migrada.
+const server = app.listen(config.port, '0.0.0.0', () => {
+  console.log(`[TaskBoard Backend] Servidor ejecutándose en el puerto ${config.port}`);
 });
 
-// Configuración del Cliente de Redis
-const redisHost = process.env.REDIS_HOST || 'cache';
-const redisPort = process.env.REDIS_PORT || 6379;
-const redisClient = createClient({
-  url: `redis://${redisHost}:${redisPort}`
-});
-
-redisClient.on('error', (err) => {
-  console.error('[Redis Client Error]', err.message);
-});
-
-// Conexión inicial a Redis
-(async () => {
+async function prepareDatabase(attempt = 1) {
   try {
-    await redisClient.connect();
-    console.log(`[TaskBoard Backend] Conectado a Redis en ${redisHost}:${redisPort}`);
+    await runMigrations(pool);
+    await seedPasswords(pool, config.seedUserPassword, { rounds: config.bcryptRounds });
+    ready = true;
+    console.log('[TaskBoard Backend] Base de datos lista');
   } catch (err) {
-    console.error('[TaskBoard Backend] Error conectando a Redis al iniciar:', err.message);
+    const delay = Math.min(1000 * 2 ** (attempt - 1), 15000);
+    console.error(`[TaskBoard Backend] Preparación de BD falló (intento ${attempt}): ${err.message}. Reintento en ${delay} ms`);
+    setTimeout(() => prepareDatabase(attempt + 1), delay).unref();
   }
-})();
+}
+prepareDatabase();
 
-// Endpoint de vitalidad (Liveness Probe)
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-// Endpoint de disponibilidad (Readiness Probe para PostgreSQL)
-app.get('/api/ready', async (req, res) => {
-  try {
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
-    res.status(200).json({ status: 'ready' });
-  } catch (error) {
-    console.error('Error al verificar conexión con PostgreSQL:', error.message);
-    res.status(500).json({
-      status: 'error',
-      message: 'No se pudo conectar a la base de datos',
-      error: error.message,
-    });
-  }
-});
-
-// Endpoint de verificación de Caché (Redis PING)
-app.get('/api/cache', async (req, res) => {
-  try {
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
-    const pong = await redisClient.ping();
-    if (pong === 'PONG') {
-      return res.status(200).json({ status: 'cache-ready' });
-    }
-    return res.status(500).json({
-      status: 'error',
-      message: 'Respuesta inesperada de Redis',
-      pong
-    });
-  } catch (error) {
-    console.error('Error al verificar conexión con Redis:', error.message);
-    return res.status(500).json({
-      status: 'error',
-      message: 'No se pudo conectar a Redis Cache',
-      error: error.message
-    });
-  }
-});
-
-// Endpoint base informativo
-app.get('/api', (req, res) => {
-  res.status(200).json({
-    name: 'TaskBoard API',
-    version: '1.0.0',
-    endpoints: ['/api/health', '/api/ready', '/api/cache', '/api/equipos', '/api/tareas']
+// Apagado ordenado: Kubernetes envía SIGTERM antes de eliminar el Pod.
+function shutdown(signal) {
+  console.log(`[TaskBoard Backend] ${signal} recibido, cerrando...`);
+  server.close(() => {
+    Promise.allSettled([pool.end(), cache.quit()]).finally(() => process.exit(0));
   });
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+// Red de seguridad: una promesa rechazada sin manejar se registra en lugar de tumbar el proceso.
+process.on('unhandledRejection', (reason) => {
+  console.error('[TaskBoard Backend] Promesa rechazada sin manejar:', reason);
 });
-
-// Iniciar servidor escuchando en todas las interfaces para Docker
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[TaskBoard Backend] Servidor ejecutándose en el puerto ${PORT}`);
-});
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

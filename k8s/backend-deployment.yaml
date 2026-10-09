@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: taskboard
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: backend
+          image: taskboard/backend:1.0.0
+          # Imagen construida dentro de Minikube (scripts/k8s-build.sh), no en un registro (DV-09).
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: db-credentials
+          livenessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /api/ready, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

@@ -1,0 +1,43 @@
+# Plantilla procesada por envsubst al arrancar la imagen oficial de NGINX.
+# BACKEND_HOST: "backend" en Docker Compose; en Kubernetes el FQDN del Service
+# (backend-svc.taskboard.svc.cluster.local), porque el resolver de NGINX no usa dominios de búsqueda.
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+
+    # Resolución DNS dinámica: si el backend se recrea con otra IP, NGINX la vuelve a resolver.
+    # NGINX_LOCAL_RESOLVERS lo genera la imagen oficial a partir de /etc/resolv.conf.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    # add_header dentro de un location reemplaza los del server: por eso se incluye el snippet en cada uno.
+    # Recursos con hash en el nombre: caché larga.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # SPA: cualquier ruta del cliente devuelve index.html.
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/snippets/security-headers.conf;
+    }
+
+    # Proxy inverso hacia la API (en Kubernetes el Ingress enruta /api directamente).
+    location /api/ {
+        set $backend_upstream http://${BACKEND_HOST}:${BACKEND_PORT};
+        proxy_pass $backend_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
