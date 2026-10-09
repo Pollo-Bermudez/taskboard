@@ -106,3 +106,32 @@ test('logout revoca el refresh token y borra cookies', opts, async () => {
 test('sin cookie de refresh responde 401', opts, async () => {
   assert.equal((await request(app).post('/api/auth/refresh')).status, 401);
 });
+
+test('tras 5 fallos el correo queda bloqueado (429 + Retry-After) aunque la contraseña sea correcta', opts, async () => {
+  const correo = USUARIOS.devops.toUpperCase();
+  for (let i = 0; i < 5; i += 1) {
+    const res = await request(app).post('/api/auth/login').send({ correo, password: 'mala' });
+    assert.equal(res.status, 401, `intento ${i + 1}`);
+  }
+  const bloqueado = await request(app).post('/api/auth/login').send({ correo: USUARIOS.devops, password: TEST_PASSWORD });
+  assert.equal(bloqueado.status, 429);
+  assert.ok(Number(bloqueado.headers['retry-after']) > 0);
+  assert.match(bloqueado.body.error, /Demasiados intentos/);
+  await db.pool.query('DELETE FROM login_intentos');
+});
+
+test('un login correcto reinicia el contador de fallos', opts, async () => {
+  const correo = USUARIOS.backend2;
+  for (let i = 0; i < 4; i += 1) await request(app).post('/api/auth/login').send({ correo, password: 'mala' });
+  assert.equal((await request(app).post('/api/auth/login').send({ correo, password: TEST_PASSWORD })).status, 200);
+  for (let i = 0; i < 4; i += 1) {
+    assert.equal((await request(app).post('/api/auth/login').send({ correo, password: 'mala' })).status, 401);
+  }
+  assert.equal((await request(app).post('/api/auth/login').send({ correo, password: TEST_PASSWORD })).status, 200);
+});
+
+test('correos inexistentes también se limitan (no se revela si la cuenta existe)', opts, async () => {
+  const correo = 'nadie-mas@taskboard.local';
+  for (let i = 0; i < 5; i += 1) await request(app).post('/api/auth/login').send({ correo, password: 'x' });
+  assert.equal((await request(app).post('/api/auth/login').send({ correo, password: 'x' })).status, 429);
+});

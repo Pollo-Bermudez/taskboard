@@ -26,6 +26,8 @@ function loadConfig(env = process.env) {
     cookieSecure: env.COOKIE_SECURE === 'true',
     seedUserPassword: env.SEED_USER_PASSWORD || null,
     bcryptRounds: parseInt(env.BCRYPT_ROUNDS, 10) || 12,
+    loginMaxIntentos: parseInt(env.LOGIN_MAX_INTENTOS, 10) || 5,
+    loginVentanaMin: parseInt(env.LOGIN_VENTANA_MIN, 10) || 15,
     redis: {
       host: env.REDIS_HOST || 'cache',
       port: parseInt(env.REDIS_PORT, 10) || 6379,

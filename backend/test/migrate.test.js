@@ -13,7 +13,7 @@ test('migraciones quedan registradas y son idempotentes', opts, async () => {
   await runMigrations(db.pool, { log: () => {} });
   await Promise.all([runMigrations(db.pool, { log: () => {} }), runMigrations(db.pool, { log: () => {} })]);
   const { rows } = await db.pool.query('SELECT version FROM schema_migrations');
-  assert.deepEqual(rows.map((r) => r.version), ['001_auth.sql', '002_correo_unico_insensible.sql']);
+  assert.deepEqual(rows.map((r) => r.version), ['001_auth.sql', '002_correo_unico_insensible.sql', '003_login_intentos.sql']);
 });
 
 test('seed asigna hash bcrypt, nunca texto plano', opts, async () => {

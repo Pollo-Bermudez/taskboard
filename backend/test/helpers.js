@@ -8,6 +8,8 @@ const TEST_CONFIG = {
   cookieSecure: false,
   seedUserPassword: null,
   bcryptRounds: 4,
+  loginMaxIntentos: 5,
+  loginVentanaMin: 15,
 };
 
 function fakePool({ fail = false } = {}) {

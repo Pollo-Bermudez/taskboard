@@ -11,7 +11,7 @@ const USUARIO_PUBLICO = `
   SELECT u.id, u.nombre, u.correo, u.rol, u.equipo_id, e.nombre AS equipo_nombre, e.color_hex AS equipo_color
     FROM usuarios u JOIN equipos e ON e.id = u.equipo_id`;
 
-function authRouter({ pool, auth, bcryptRounds }) {
+function authRouter({ pool, auth, bcryptRounds, maxIntentos = 5, ventanaMin = 15 }) {
   const router = express.Router();
   // Hash ficticio con el mismo costo que los reales: un correo inexistente tarda lo mismo
   // que una contraseña incorrecta y no revela qué correos existen.
@@ -20,6 +20,37 @@ function authRouter({ pool, auth, bcryptRounds }) {
   async function startSession(res, db, usuario, familia) {
     const refreshToken = await auth.issueRefreshToken(db, usuario.id, familia);
     auth.setSessionCookies(res, auth.signAccessToken(usuario), refreshToken);
+  }
+
+  // Límite de intentos (DV-16): el contador vive en PostgreSQL para que sea el mismo en
+  // todas las réplicas. Se aplica a cualquier correo, exista o no, para no revelar cuentas.
+  async function bloqueoVigente(correo) {
+    const { rows } = await pool.query(
+      `SELECT CEIL(EXTRACT(EPOCH FROM bloqueado_hasta - NOW()))::int AS segundos
+         FROM login_intentos WHERE correo = $1 AND bloqueado_hasta > NOW()`,
+      [correo],
+    );
+    return rows[0]?.segundos || 0;
+  }
+
+  async function registrarFallo(correo) {
+    const reiniciar = 'login_intentos.primer_fallo < NOW() - make_interval(mins => $2)';
+    const fallos = `CASE WHEN ${reiniciar} THEN 1 ELSE login_intentos.fallos + 1 END`;
+    await pool.query(
+      `INSERT INTO login_intentos (correo, fallos, primer_fallo, bloqueado_hasta)
+       VALUES ($1, 1, NOW(), CASE WHEN 1 >= $3 THEN NOW() + make_interval(mins => $2) END)
+       ON CONFLICT (correo) DO UPDATE SET
+         fallos = ${fallos},
+         primer_fallo = CASE WHEN ${reiniciar} THEN NOW() ELSE login_intentos.primer_fallo END,
+         bloqueado_hasta = CASE WHEN ${fallos} >= $3 THEN NOW() + make_interval(mins => $2) END`,
+      [correo, ventanaMin, maxIntentos],
+    );
+  }
+
+  function demasiadosIntentos(res, segundos) {
+    res.set('Retry-After', String(segundos));
+    const minutos = Math.ceil(segundos / 60);
+    return res.status(429).json({ error: `Demasiados intentos fallidos. Intenta de nuevo en ${minutos} minuto${minutos === 1 ? '' : 's'}.` });
   }
 
   async function usuarioPublico(id, db = pool) {
@@ -34,15 +65,21 @@ function authRouter({ pool, auth, bcryptRounds }) {
         throw new HttpError(400, 'Correo y contraseña son obligatorios');
       }
 
+      const clave = correo.trim().toLowerCase();
+      const espera = await bloqueoVigente(clave);
+      if (espera) return demasiadosIntentos(res, espera);
+
       const { rows } = await pool.query(
-        'SELECT id, equipo_id, rol, password_hash FROM usuarios WHERE lower(correo) = lower($1)',
-        [correo.trim()],
+        'SELECT id, equipo_id, rol, password_hash FROM usuarios WHERE lower(correo) = $1',
+        [clave],
       );
       const usuario = rows[0];
       const valid = await bcrypt.compare(password, usuario?.password_hash || dummyHash);
       if (!usuario || !usuario.password_hash || !valid) {
+        await registrarFallo(clave);
         throw new HttpError(401, 'Credenciales inválidas');
       }
+      await pool.query('DELETE FROM login_intentos WHERE correo = $1', [clave]);
 
       await pool.query('DELETE FROM refresh_tokens WHERE usuario_id = $1 AND expira_en < NOW()', [usuario.id]);
       await startSession(res, pool, usuario);

@@ -278,8 +278,8 @@ Crear tarea (modal), editar, reasignar (solo usuarios del equipo), cambiar estad
 ### - [x] I1: Integrar caché Redis de `main` (DV-19)
 Merge con `main` resuelto sobre la arquitectura modular; sonda `/api/cache`; servicio `cache` en Compose; Deployment, Service y NetworkPolicy en K8s. Validado en Compose y Minikube.
 
-### - [ ] I2: 🔍 POR REVISAR — Límite de intentos de login (DV-16)
-Opciones en `docs/specs/SPEC.md` (Open Questions): limitador en memoria por IP, contador en PostgreSQL por correo, o fuera de alcance.
+### - [x] I2: Límite de intentos de login (DV-16)
+Contador por correo en PostgreSQL (migración 003): 5 fallos en 15 min → 429 + `Retry-After`. 3 pruebas nuevas (43 con BD).
 
 ### - [ ] I3: 🔍 POR REVISAR — PR a `main`
 Rama `taskboard-agent-skills-analysis` publicada. El PR se abre desde la web: la cuenta de `gh` local no es colaboradora del repositorio.

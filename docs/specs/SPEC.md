@@ -281,7 +281,7 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-12 (P1) | JWT sin login definido; `usuarios` sin contraseña | Login + access 15 min + refresh 3 días rotativo en cookies httpOnly; `password_hash`, tabla `refresh_tokens` | Tabla 2 no cubría autenticación |
 | DV-14 | Migraciones en `db/migrations/` | `backend/migrations/`; pruebas con BD en servicio `backend-test` (perfil `test`) | El contexto de build del backend es `./backend`; el backend las aplica al arrancar |
 | DV-15 | Runtime backend `FROM node:20-alpine` directo | Etapa `runtime-base` desde `node:20-alpine` sin npm/npx/corepack/yarn, aplanada con `FROM scratch` + `COPY --from` | Con `node:20-alpine` directo la imagen medía 149.6 MB (límite 150); aplanada mide ~125 MB y sin gestores de paquetes en producción |
-| DV-16 | Sin límite de intentos de login | Pendiente (ver Open Questions) | Rate limiting es tier "Ask first" en `security-and-hardening` |
+| DV-16 | Sin límite de intentos de login | Contador por correo en PostgreSQL (`login_intentos`, migración 003): 5 fallos en 15 min → 429 con `Retry-After` durante 15 min; un login correcto lo reinicia; aplica también a correos inexistentes | Consistente entre réplicas del HPA y sin depender de la IP (falsificable con `X-Forwarded-For`) |
 | DV-17 | UI sin design system definido (React + CSS nativo) | Design system **Nocturne** (copiado en `frontend/src/styles/nocturne.css`) + capa `app.css` | Interfaz consistente para un gestor de equipo; Inter servida localmente con `@fontsource/inter` para respetar la CSP (`font-src 'self'`) |
 | DV-18 | Vista global agrupada por equipo | Matriz equipos × estados en escritorio; lista agrupada en móvil | Lectura de todo el equipo de un vistazo |
 | DV-19 | Tres servicios (frontend, backend, db) | Cuarto servicio Redis (`cache`): en Compose en `red-interna`; en K8s Deployment + `cache-svc` + NetworkPolicy solo desde backend; sonda `GET /api/cache` (503 genérico si falla, no afecta readiness) | Aportado por el equipo en `main`; integrado a la arquitectura modular |
@@ -291,5 +291,5 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 
 Ninguna bloqueante. Nuevas dudas se agregan aquí durante la implementación.
 
-- **🔍 POR REVISAR – Rate limiting de login (DV-16):** no hay límite de intentos en `POST /api/auth/login`. Un limitador en memoria es por réplica (con HPA 2–6 el límite real se multiplica). Opciones: (a) limitador en memoria por IP (simple, suficiente para el proyecto); (b) contador en PostgreSQL por correo (consistente entre réplicas); (c) dejarlo fuera de alcance y documentarlo. Nota: con `trust proxy` y el backend publicado en `3001` para depuración, `X-Forwarded-For` es falsificable; un limitador por IP solo es fiable detrás de NGINX/Ingress.
+- **Resuelto – Rate limiting de login (DV-16):** contador por correo en PostgreSQL; ver registro de desviaciones.
 - **Resuelto – Refresh concurrente entre pestañas:** un token rotado hace < 30 s responde 401 sin revocar la familia, y el cliente reintenta la petición original con las cookies ya renovadas por la otra pestaña.
