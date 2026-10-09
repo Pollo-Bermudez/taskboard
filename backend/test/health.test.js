@@ -58,3 +58,19 @@ test('refresh con la base de datos caída responde 500 sin tumbar el proceso', a
   assert.equal(res.status, 500);
   assert.doesNotMatch(JSON.stringify(res.body), /timeout/);
 });
+
+test('GET /api/cache responde 200 cuando Redis contesta PONG', async () => {
+  const cache = { isReady: true, ping: async () => 'PONG' };
+  const app = createApp({ pool: fakePool(), cache, config: TEST_CONFIG });
+  const res = await request(app).get('/api/cache');
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body, { status: 'cache-ready' });
+});
+
+test('GET /api/cache responde 503 sin detalles cuando Redis no está disponible', async () => {
+  const cache = { isReady: false, ping: async () => { throw new Error('ECONNREFUSED 10.0.0.2:6379'); } };
+  const app = createApp({ pool: fakePool(), cache, config: TEST_CONFIG });
+  const res = await request(app).get('/api/cache');
+  assert.equal(res.status, 503);
+  assert.doesNotMatch(JSON.stringify(res.body), /ECONNREFUSED/);
+});

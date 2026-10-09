@@ -11,6 +11,8 @@ data:
   DB_PORT: "5432"
   DB_NAME: taskboard
   POSTGRES_DB: taskboard
+  REDIS_HOST: cache-svc
+  REDIS_PORT: "6379"
   ACCESS_TOKEN_TTL: 15m
   REFRESH_TOKEN_TTL_DAYS: "3"
   # true solo si el Ingress sirve HTTPS; con http://taskboard.local el navegador descartaría la cookie.

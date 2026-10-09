@@ -8,7 +8,7 @@ const { equiposRouter } = require('./routes/equipos');
 const { tareasRouter } = require('./routes/tareas');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
-function createApp({ pool, config, isReady }) {
+function createApp({ pool, cache, config, isReady }) {
   const app = express();
   const auth = createAuth(config);
 
@@ -18,7 +18,7 @@ function createApp({ pool, config, isReady }) {
   app.use(cookieParser());
 
   // Públicas: probes y autenticación.
-  app.use('/api', healthRouter({ pool, isReady }));
+  app.use('/api', healthRouter({ pool, cache, isReady }));
   app.use('/api/auth', authRouter({ pool, auth, bcryptRounds: config.bcryptRounds }));
   app.get('/api', (req, res) => {
     res.status(200).json({ name: 'TaskBoard API', version: '1.0.0' });

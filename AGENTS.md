@@ -6,6 +6,7 @@ Aplicación web de gestión de tareas (TaskBoard) con arquitectura en tres capas
 - **Frontend**: React 18 + Vite + NGINX (JavaScript puro JSX, CSS nativo)
 - **Backend**: Node.js 20 + Express (JavaScript puro, punto de entrada `node src/server.js`)
 - **Base de Datos**: PostgreSQL 16 (StatefulSet con PVC en K8s, Named Volume en Docker Compose)
+- **Caché**: Redis 7 (servicio `cache` en Compose, Deployment `cache` + `cache-svc` en K8s; sonda `GET /api/cache`)
 - **Contenerización**: Docker & Docker Compose (Multi-stage builds, imágenes Alpine, redes bridge aisladas)
 - **Orquestación**: Kubernetes (Deployments, Services, StatefulSet, ConfigMap, Secrets, HPA, NetworkPolicy, Ingress)
 
@@ -40,11 +41,12 @@ taskboard/
   - `node:20-alpine`
   - `nginx:1.27-alpine`
   - `postgres:16-alpine`
+  - `redis:7-alpine` (caché)
 - **Archivos `.dockerignore`**: Presentes en `frontend/` y `backend/` excluyendo `node_modules`, `.git`, `.env`, dist, etc.
 - **Volumen Persistente (Named Volume)**: Volumen para PostgreSQL montado en `/var/lib/postgresql/data`.
 - **Aislamiento de Redes (Bridge)**:
   - `red-publica`: Frontend accesible en puerto host `8080:8080`.
-  - `red-interna`: Comunicación backend y base de datos con `internal: true`.
+  - `red-interna`: Comunicación backend, base de datos y caché con `internal: true`.
 - **Puertos**:
   - Frontend: `8080:8080` (NGINX sin root escucha en 8080 dentro del contenedor; en K8s `frontend-svc:80 → 8080`).
   - Backend: `3001:3000` (el contenedor escucha en 3000; 3001 en el host porque 3000 está ocupado localmente).

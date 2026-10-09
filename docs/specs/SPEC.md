@@ -284,6 +284,7 @@ Paralelizable: Hugo (DevOps/DB) puede adelantar Slice 5 con la API actual de hea
 | DV-16 | Sin límite de intentos de login | Pendiente (ver Open Questions) | Rate limiting es tier "Ask first" en `security-and-hardening` |
 | DV-17 | UI sin design system definido (React + CSS nativo) | Design system **Nocturne** (copiado en `frontend/src/styles/nocturne.css`) + capa `app.css` | Interfaz consistente para un gestor de equipo; Inter servida localmente con `@fontsource/inter` para respetar la CSP (`font-src 'self'`) |
 | DV-18 | Vista global agrupada por equipo | Matriz equipos × estados en escritorio; lista agrupada en móvil | Lectura de todo el equipo de un vistazo |
+| DV-19 | Tres servicios (frontend, backend, db) | Cuarto servicio Redis (`cache`): en Compose en `red-interna`; en K8s Deployment + `cache-svc` + NetworkPolicy solo desde backend; sonda `GET /api/cache` (503 genérico si falla, no afecta readiness) | Aportado por el equipo en `main`; integrado a la arquitectura modular |
 | DV-13 (P6) | Respaldos/migraciones solo mencionados en Tabla 1 | `db/migrations/` + `schema_migrations`; `pg_dump` script + CronJob | Necesario para evolucionar el esquema |
 
 ## Open Questions

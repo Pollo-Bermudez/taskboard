@@ -1,6 +1,6 @@
 const express = require('express');
 
-function healthRouter({ pool, isReady = () => true }) {
+function healthRouter({ pool, cache, isReady = () => true }) {
   const router = express.Router();
 
   // Liveness: solo verifica que el proceso responde.
@@ -18,6 +18,21 @@ function healthRouter({ pool, isReady = () => true }) {
       res.status(200).json({ status: 'ready' });
     } catch (err) {
       console.error('[ready] Sin conexión con PostgreSQL:', err.message);
+      res.status(503).json({ status: 'unavailable' });
+    }
+  });
+
+  // Caché: PING a Redis. Informativo; no forma parte de la readiness para que una caída
+  // de Redis no saque de servicio a la API.
+  router.get('/cache', async (req, res) => {
+    if (!cache) return res.status(503).json({ status: 'unavailable' });
+    try {
+      if (!cache.isReady) throw new Error('cliente de Redis no conectado');
+      const pong = await cache.ping();
+      if (pong !== 'PONG') throw new Error(`respuesta inesperada: ${pong}`);
+      res.status(200).json({ status: 'cache-ready' });
+    } catch (err) {
+      console.error('[cache] PING falló:', err.message);
       res.status(503).json({ status: 'unavailable' });
     }
   });

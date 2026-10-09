@@ -7,9 +7,9 @@ import { POLLING_MS } from '../constants.js';
 import { iniciales } from './TaskCard.jsx';
 import { GridIcon, KanbanIcon, ListIcon, LogoIcon, SignOutIcon } from './Icons.jsx';
 
-async function servidorListo() {
+async function sondaOk(ruta) {
   try {
-    return (await fetch('/api/ready')).ok;
+    return (await fetch(ruta)).ok;
   } catch {
     return false;
   }
@@ -21,12 +21,19 @@ export default function Sidebar() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   const cargar = useCallback(async () => {
-    const [equipos, tareas, listo] = await Promise.all([api('/equipos'), api('/tareas/global'), servidorListo()]);
+    const [equipos, tareas, listo, cache] = await Promise.all([api('/equipos'), api('/tareas/global'), sondaOk('/api/ready'), sondaOk('/api/cache')]);
     const abiertas = (id) => tareas.filter((t) => t.equipo_id === id && t.estado !== 'completada').length;
-    return { equipos: equipos.map((e) => ({ ...e, abiertas: abiertas(e.id) })), listo };
+    return { equipos: equipos.map((e) => ({ ...e, abiertas: abiertas(e.id) })), listo, cache };
   }, []);
   const { data, error } = usePolling(cargar, POLLING_MS);
-  const operativo = data?.listo && !error;
+  const operativo = data?.listo && data?.cache && !error;
+  const estado = !data
+    ? 'Comprobando servicios…'
+    : operativo
+      ? 'API, base de datos y caché operativas'
+      : !data.listo
+        ? 'Base de datos no disponible'
+        : 'Caché no disponible';
 
   const salir = async () => {
     await logout();
@@ -69,7 +76,7 @@ export default function Sidebar() {
       <div className="sidebar-bottom sidebar-extra">
         <div className="status-line muted" role="status">
           <span className={`status-dot ${operativo ? 'ok' : 'mal'}`} />
-          {data ? (operativo ? 'API y base de datos operativas' : 'Base de datos no disponible') : 'Comprobando servicios…'}
+          {estado}
         </div>
         <div className="user-chip">
           <span className="avatar avatar-lg" aria-hidden="true">{iniciales(usuario.nombre)}</span>

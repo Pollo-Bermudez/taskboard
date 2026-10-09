@@ -4,6 +4,7 @@ try { require('dotenv').config(); } catch { /* no instalado en producción */ }
 const { loadConfig } = require('./config');
 const { createPool } = require('./db');
 const { createApp } = require('./app');
+const { createCache } = require('./cache');
 const { runMigrations, seedPasswords } = require('./migrate');
 
 let config;
@@ -15,8 +16,9 @@ try {
 }
 
 const pool = createPool(config.db);
+const cache = createCache(config.redis);
 let ready = false;
-const app = createApp({ pool, config, isReady: () => ready });
+const app = createApp({ pool, cache, config, isReady: () => ready });
 
 // Se escucha antes de migrar: liveness responde de inmediato y readiness
 // devuelve 503 hasta que la base de datos esté migrada.
@@ -42,7 +44,7 @@ prepareDatabase();
 function shutdown(signal) {
   console.log(`[TaskBoard Backend] ${signal} recibido, cerrando...`);
   server.close(() => {
-    pool.end().finally(() => process.exit(0));
+    Promise.allSettled([pool.end(), cache.quit()]).finally(() => process.exit(0));
   });
   setTimeout(() => process.exit(1), 10000).unref();
 }

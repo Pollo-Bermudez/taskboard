@@ -22,3 +22,24 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
+---
+# Solo el backend puede conectar a Redis.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cache-allow-backend
+  namespace: taskboard
+spec:
+  podSelector:
+    matchLabels:
+      app: cache
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: backend
+      ports:
+        - protocol: TCP
+          port: 6379

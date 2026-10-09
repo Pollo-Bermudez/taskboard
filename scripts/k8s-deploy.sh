@@ -23,9 +23,11 @@ kubectl apply -f k8s/storageclass.yaml -f k8s/configmap.yaml
 kubectl apply -f k8s/db-service.yaml -f k8s/db-statefulset.yaml -f k8s/networkpolicy.yaml
 kubectl -n "$NS" wait --for=condition=Ready pod/postgres-0 --timeout=240s  # OnDelete no admite rollout status
 
+kubectl apply -f k8s/cache-service.yaml -f k8s/cache-deployment.yaml
 kubectl apply -f k8s/backend-service.yaml -f k8s/backend-deployment.yaml -f k8s/backend-hpa.yaml
 kubectl apply -f k8s/frontend-service.yaml -f k8s/frontend-deployment.yaml
 kubectl apply -f k8s/ingress.yaml -f k8s/db-backup-cronjob.yaml
+kubectl -n "$NS" rollout status deployment/cache --timeout=180s
 kubectl -n "$NS" rollout status deployment/backend --timeout=180s
 kubectl -n "$NS" rollout status deployment/frontend --timeout=180s
 
