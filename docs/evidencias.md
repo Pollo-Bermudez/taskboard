@@ -161,3 +161,23 @@ Respaldo creado: /backups/taskboard-20261007-140734.dump
 ```
 
 El Job lleva la etiqueta `app: db-backup`, que la NetworkPolicy también permite.
+
+## Caché Redis (DV-19)
+
+Compose: la sonda responde, y si se detiene Redis solo la sonda falla; la API sigue lista.
+
+```
+GET /api/cache -> {"status":"cache-ready"}
+docker compose stop cache  ->  GET /api/cache -> {"status":"unavailable"}  ·  GET /api/ready -> {"status":"ready"}
+docker compose start cache ->  GET /api/cache -> {"status":"cache-ready"}
+```
+
+Minikube (Deployment `cache` + `cache-svc` + NetworkPolicy `cache-allow-backend`):
+
+```
+GET /api/cache (Ingress)            -> {"status":"cache-ready"}
+pod sin label app=backend: redis-cli -h cache-svc ping -> sin respuesta
+desde deploy/backend:      backend -> cache-svc:6379 CONECTA
+```
+
+Pruebas con BD: `# pass 40 · # fail 0`. Imagen del backend con el cliente de Redis: 127.9 MB.

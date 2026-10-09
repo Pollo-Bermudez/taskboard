@@ -88,6 +88,7 @@ kubectl -n taskboard port-forward svc/frontend-svc 8080:80
 | 3 | Borrar un Pod backend no interrumpe el servicio | Terminal A: `while true; do curl -s -o /dev/null -w "%{http_code}\n" http://taskboard.local/api/health; sleep 0.2; done` · Terminal B: `kubectl -n taskboard delete pod -l app=backend --wait=false` (borra uno a la vez si se quiere ver la recreación) |
 | 4 | Borrar el Pod de PostgreSQL conserva datos | Crear tarea en la UI → `kubectl -n taskboard delete pod postgres-0` → esperar `Ready` → la tarea sigue |
 | 5 | HPA escala y desescala | Terminal A: `kubectl -n taskboard get hpa -w` · Terminal B: `scripts/load-test.sh 20 300` → réplicas > 2; al terminar, vuelven a 2 tras ≥ 300 s |
+| — | Caché Redis | `curl -H 'Host: taskboard.local' http://127.0.0.1/api/cache` → `cache-ready`; `kubectl -n taskboard run t --rm -it --image=redis:7-alpine -- redis-cli -h cache-svc ping` → sin respuesta (NetworkPolicy) |
 | 7 | NetworkPolicy aísla PostgreSQL | `kubectl -n taskboard run np-test --rm -it --image=postgres:16-alpine --restart=Never -- pg_isready -h db-svc -t 5` → debe fallar (`no response`); el backend sigue `Ready` |
 | — | PV con Retain | `kubectl get pv` → `RECLAIM POLICY = Retain` |
 | — | Respaldo manual | `kubectl -n taskboard create job --from=cronjob/db-backup db-backup-manual` → `kubectl -n taskboard logs job/db-backup-manual` |
